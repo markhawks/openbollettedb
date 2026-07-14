@@ -8,6 +8,19 @@
 Applicazione PHP minimale, senza framework né dipendenze esterne, per tenere traccia delle bollette
 domestiche (Luce, Gas, Acqua, TARI, Bonifica) in un database SQLite locale.
 
+## Screenshot
+
+Le immagini seguenti mostrano l'app popolata con i dati generati da `app/seed_demo.php` (dati inventati,
+non le bollette di un utente reale).
+
+| Luce | Gas |
+|---|---|
+| ![Dashboard Luce](assets/img/screenshots/luce.png) | ![Dashboard Gas](assets/img/screenshots/gas.png) |
+
+| Acqua | Nuova bolletta |
+|---|---|
+| ![Dashboard Acqua](assets/img/screenshots/acqua.png) | ![Form nuova bolletta](assets/img/screenshots/nuova-bolletta.png) |
+
 ## Requisiti
 
 - PHP 8.x con estensione PDO SQLite

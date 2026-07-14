@@ -25,6 +25,7 @@ $release = [
       'Rafforzata la conferma del pulsante "🗑️ Svuota anno": ora bisogna digitare l\'anno esatto in una finestra di conferma (non basta più un click su OK), per evitare cancellazioni accidentali.',
       'Aggiunta un\'icona (favicon 🧾) mostrata nella scheda del browser, prima assente.',
       'Corretto un bug nella pagina Gas: conteneva un secondo documento HTML annidato (doppio head/body e Chart.js caricato due volte), invisibile a schermo ma non valido.',
+      'Aggiunti screenshot (Luce, Gas, Acqua, form Nuova bolletta) nel README, generati con dati demo.',
     ],
   ],
   [
