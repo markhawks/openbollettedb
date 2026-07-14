@@ -13,7 +13,7 @@
     <a class="btn secondary" href="index.php?u=luce">💡 Luce</a>
     <a class="btn secondary" href="index.php?u=gas">🔥 Gas</a>
     <a class="btn secondary" href="index.php?u=luce gas">💡🔥 Luce + Gas</a>
-    <a class="btn secondary" href="index.php?u=tari">🗑️ TARI</a>
+    <a class="btn secondary" href="index.php?u=tari">🗑️ Tari</a>
     <a class="btn secondary" href="index.php?u=acqua">💧 Acqua</a>
     <a class="btn secondary" href="index.php?u=bonifica">🌾 Bonifica</a>
 
