@@ -89,7 +89,7 @@ $amounts = array_map(fn($v) => (float)$v, array_column($chartData, 'totale'));
         <h2>Avvisi Bonifica – <?= $year ?></h2>
         <a class="btn-reset-year"
            href="reset_year.php?u=bonifica&year=<?= $year ?>&csrf=<?= urlencode($csrfToken) ?>"
-           onclick="return confirm('Eliminare TUTTI gli avvisi Bonifica del <?= $year ?>? Operazione irreversibile.');"
+           onclick="return confirmResetAnno('Bonifica', <?= $year ?>);"
            title="Elimina tutti gli avvisi Bonifica di questo anno">
           🗑️ Svuota anno
         </a>

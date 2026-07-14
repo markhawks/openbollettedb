@@ -165,7 +165,7 @@ function luceGrowthBadge(array $crescita, string $label, string $unit): string {
     </h2>
     <a class="btn-reset-year"
        href="reset_year.php?u=luce&year=<?= $year ?>&csrf=<?= urlencode($csrfToken) ?>"
-       onclick="return confirm('Eliminare TUTTE le bollette Luce del <?= $year ?>? Operazione irreversibile.');"
+       onclick="return confirmResetAnno('Luce', <?= $year ?>);"
        title="Elimina tutte le bollette Luce di questo anno">
       🗑️ Svuota anno
     </a>

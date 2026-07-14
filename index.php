@@ -12,6 +12,7 @@ $u = $_GET['u'] ?? 'luce';
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="stylesheet" href="assets/css/index_style.css">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="assets/js/confirm-reset.js"></script>
 </head>
 <body>
 

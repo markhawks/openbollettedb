@@ -143,7 +143,7 @@ $consumi = array_map(fn($v) => (float)$v, array_column($chartData, 'consumo'));
     <h2>Bollette Acqua – <?= $year ?></h2>
     <a class="btn-reset-year"
        href="reset_year.php?u=acqua&year=<?= $year ?>&csrf=<?= urlencode($csrfToken) ?>"
-       onclick="return confirm('Eliminare TUTTE le bollette Acqua del <?= $year ?>? Operazione irreversibile.');"
+       onclick="return confirmResetAnno('Acqua', <?= $year ?>);"
        title="Elimina tutte le bollette Acqua di questo anno">
       🗑️ Svuota anno
     </a>

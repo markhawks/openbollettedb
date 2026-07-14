@@ -22,6 +22,7 @@ $release = [
       'Rinominato l\'account GitHub da "maccumaccu" a "markhawks" (il vecchio URL del repository resta comunque reindirizzato automaticamente da GitHub).',
       'README: aggiunta la guida di installazione su Fedora 44 (pacchetti, servizi Apache/php-fpm, firewalld, permessi, SELinux, configurazione Apache per data/) e una sezione di backup del database.',
       'Aggiunti LICENSE (tutti i diritti riservati), badge informativi e una sezione "Roadmap e limiti noti" nel README.',
+      'Rafforzata la conferma del pulsante "🗑️ Svuota anno": ora bisogna digitare l\'anno esatto in una finestra di conferma (non basta più un click su OK), per evitare cancellazioni accidentali.',
     ],
   ],
   [

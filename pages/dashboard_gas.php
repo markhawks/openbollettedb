@@ -171,7 +171,7 @@ function gasGrowthBadge(array $crescita, string $label, string $unit): string {
     </h2>
     <a class="btn-reset-year"
        href="reset_year.php?u=gas&year=<?= $year ?>&csrf=<?= urlencode($csrfToken) ?>"
-       onclick="return confirm('Eliminare TUTTE le bollette Gas del <?= $year ?>? Operazione irreversibile.');"
+       onclick="return confirmResetAnno('Gas', <?= $year ?>);"
        title="Elimina tutte le bollette Gas di questo anno">
       🗑️ Svuota anno
     </a>

@@ -91,7 +91,7 @@ $amounts = array_map(fn($v) => (float)$v, array_column($chartData, 'totale'));
         <h2>Avvisi TARI – <?= $year ?></h2>
         <a class="btn-reset-year"
            href="reset_year.php?u=tari&year=<?= $year ?>&csrf=<?= urlencode($csrfToken) ?>"
-           onclick="return confirm('Eliminare TUTTI gli avvisi TARI del <?= $year ?>? Operazione irreversibile.');"
+           onclick="return confirmResetAnno('TARI', <?= $year ?>);"
            title="Elimina tutti gli avvisi TARI di questo anno">
           🗑️ Svuota anno
         </a>
