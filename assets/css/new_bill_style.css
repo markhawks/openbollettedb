@@ -1,0 +1,292 @@
+/* ===================================================== */
+/*  BASE                                                 */
+/* ===================================================== */
+
+:root {
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+body {
+  margin: 0;
+  background: #f6f7fb;
+  color: #1b1f2a;
+}
+
+.container {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 18px;
+}
+
+
+/* ===================================================== */
+/*  HEADER / TOPBAR                                      */
+/* ===================================================== */
+
+.topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+h1 {
+  margin: 0;
+  font-size: 26px;
+}
+
+.sub {
+  color: #667;
+  margin-top: 4px;
+}
+
+
+/* ===================================================== */
+/*  CARD / LAYOUT                                        */
+/* ===================================================== */
+
+.card {
+  background: #fff;
+  border-radius: 14px;
+  padding: 16px;
+  box-shadow: 0 6px 20px rgba(0,0,0,.06);
+  margin-top: 14px;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  gap: 14px;
+  margin-top: 14px;
+}
+
+@media (max-width: 900px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+
+/* ===================================================== */
+/*  ELEMENTI BASE FORM                                   */
+/* ===================================================== */
+
+label {
+  color: #556;
+  font-size: 14px;
+}
+
+select,
+input,
+textarea {
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid #d7d9e2;
+  font-size: 14px;
+}
+
+
+/* ===================================================== */
+/*  BOTTONI                                              */
+/* ===================================================== */
+
+.btn {
+  display: inline-block;
+  padding: 10px 14px;
+  border-radius: 12px;
+  background: #1f6feb;
+  color: #fff;
+  text-decoration: none;
+  border: 0;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.btn.secondary {
+  background: #e9eefb;
+  color: #1f3b75;
+}
+
+
+/* ===================================================== */
+/*  TABELLE                                              */
+/* ===================================================== */
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th,
+td {
+  padding: 10px 8px;
+  border-bottom: 1px solid #eef0f6;
+  font-size: 14px;
+}
+
+th {
+  text-align: left;
+  color: #556;
+  font-weight: 600;
+}
+
+.right {
+  text-align: right;
+}
+
+.muted {
+  color: #778;
+}
+
+
+/* ===================================================== */
+/*  LISTE (Totali, riepiloghi)                            */
+/* ===================================================== */
+
+.list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.list li {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 0;
+  border-bottom: 1px solid #eef0f6;
+}
+
+.list li:last-child {
+  border-bottom: 0;
+}
+
+
+/* ===================================================== */
+/*  ROW GENERICA (layout, NON form complessi)            */
+/* ===================================================== */
+
+.row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+
+
+
+/* ===================================================== */
+/* FORM INLINE – Nuova Bolletta (Corretto)               */
+/* ===================================================== */
+
+.form-inline {
+  display: flex;
+  flex-wrap: wrap;       /* Fondamentale per non far uscire i campi dallo schermo */
+  gap: 20px;             /* Spazio tra i campi */
+  align-items: flex-start; /* Allinea in alto per evitare spostamenti strani */
+  padding: 20px;
+}
+
+.form-inline .field {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 200px;       /* Spiegazione: cresci, restringiti, base minima 200px */
+  min-width: 180px;      /* Impedisce al campo di diventare invisibile */
+}
+
+.form-inline label {
+  margin-bottom: 8px;
+  font-weight: bold;
+}
+
+.form-inline input {
+  width: 100%;           /* L'input deve occupare tutto il suo contenitore .field */
+  padding: 10px;
+  box-sizing: border-box; /* Include il padding nella larghezza */
+}
+
+.form-inline .actions {
+  flex: 1 1 100%;        /* Forza il tasto Salva ad andare su una riga nuova se vuoi spazio */
+  margin-top: 10px;
+}
+
+/* Responsive: sui cellulari mettiamo un campo per riga */
+@media (max-width: 600px) {
+  .form-inline .field {
+    flex: 1 1 100%;
+  }
+}
+
+
+
+/* ===================================================== */
+/*  RESPONSIVE – FORM INLINE                              */
+/* ===================================================== */
+
+@media (max-width: 900px) {
+  .form-inline {
+    gap: 10px;
+  }
+
+  .form-inline .actions {
+    margin-left: 0;
+    width: 100%;
+  }
+
+  .form-inline .actions .btn {
+    width: 100%;
+  }
+}
+
+
+/* ===================================================== */
+/*  BOTTONI                         */
+/* ===================================================== */
+
+
+.year-selector, .month-selector {
+  margin-bottom: 20px;
+  background: #fff;
+  padding: 10px;
+  border-radius: 10px;
+  border: 1px solid #eee;
+}
+
+.year-btn, .month-btn {
+  flex: 1; /* I bottoni si dividono lo spazio equamente */
+  min-width: 60px;
+  text-align: center;
+  transition: all 0.2s;
+}
+
+.year-btn:hover, .month-btn:hover {
+  border-color: #1f6feb;
+  background: #f0f5ff;
+}
+
+
+
+  /* Stile per evidenziare i bottoni selezionati */
+  .year-btn.active, .month-btn.active {
+    background-color: #2563eb !important; /* Stesso blu del tasto Salva */
+    color: white !important;
+    border-color: #1d4ed8 !important;
+    font-weight: bold;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+  }
+  
+  .year-selector, .month-selector {
+    margin-bottom: 15px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+  }
+
+  .year-btn, .month-btn {
+    cursor: pointer;
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    background: #f9f9f9;
+    border-radius: 4px;
+    transition: all 0.2s;
+  }
