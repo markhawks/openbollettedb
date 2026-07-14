@@ -23,6 +23,8 @@ $release = [
       'README: aggiunta la guida di installazione su Fedora 44 (pacchetti, servizi Apache/php-fpm, firewalld, permessi, SELinux, configurazione Apache per data/) e una sezione di backup del database.',
       'Aggiunti LICENSE (tutti i diritti riservati), badge informativi e una sezione "Roadmap e limiti noti" nel README.',
       'Rafforzata la conferma del pulsante "🗑️ Svuota anno": ora bisogna digitare l\'anno esatto in una finestra di conferma (non basta più un click su OK), per evitare cancellazioni accidentali.',
+      'Aggiunta un\'icona (favicon 🧾) mostrata nella scheda del browser, prima assente.',
+      'Corretto un bug nella pagina Gas: conteneva un secondo documento HTML annidato (doppio head/body e Chart.js caricato due volte), invisibile a schermo ma non valido.',
     ],
   ],
   [
@@ -43,6 +45,7 @@ $release = [
   <meta charset="utf-8">
   <title>Note di rilascio – OpenBolletteDB</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" type="image/svg+xml" href="assets/img/favicon.svg">
   <link rel="stylesheet" href="assets/css/index_style.css">
   <style>
     .changelog-entry { position: relative; padding-left: 20px; border-left: 3px solid #eff6ff; margin-bottom: 24px; }

@@ -297,6 +297,7 @@ if ($existingTrimestre === '') {
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Modifica Bolletta</title>
+  <link rel="icon" type="image/svg+xml" href="assets/img/favicon.svg">
   <link rel="stylesheet" href="assets/css/new_bill_style.css">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>

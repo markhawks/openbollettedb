@@ -120,18 +120,6 @@ function gasGrowthBadge(array $crescita, string $label, string $unit): string {
     . '<span style="font-weight:400;">(' . $segno . $deltaFmt . ')</span></span>';
 }
 ?>
-<!doctype html>
-<html lang="it">
-<head>
-  <meta charset="utf-8">
-  <title>Gas – OpenBolletteDB</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link rel="stylesheet" href="assets/css/index_style.css">
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-</head>
-<body>
-
-<div class="container">
 
 <header class="topbar">
   <div>
@@ -328,8 +316,6 @@ function gasGrowthBadge(array $crescita, string $label, string $unit): string {
 
 </section>
 
-</div>
-
 <?php
 /* Dati grafico */
 $labels = ["Gen","Feb","Mar","Apr","Mag","Giu","Lug","Ago","Set","Ott","Nov","Dic"];
@@ -361,6 +347,3 @@ new Chart(document.getElementById('gasChart'), {
   }
 });
 </script>
-
-</body>
-</html>
