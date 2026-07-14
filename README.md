@@ -1,5 +1,10 @@
 # OpenBolletteDB
 
+![PHP](https://img.shields.io/badge/PHP-8.x-777BB4?logo=php&logoColor=white)
+![Database](https://img.shields.io/badge/DB-SQLite-003B57?logo=sqlite&logoColor=white)
+![Tested on](https://img.shields.io/badge/tested%20on-Fedora%2044-294172?logo=fedora&logoColor=white)
+![License](https://img.shields.io/badge/license-All%20Rights%20Reserved-red)
+
 Applicazione PHP minimale, senza framework né dipendenze esterne, per tenere traccia delle bollette
 domestiche (Luce, Gas, Acqua, TARI, Bonifica) in un database SQLite locale.
 
@@ -131,3 +136,20 @@ autenticazione.
 
 Lo storico delle modifiche è consultabile nell'app stessa tramite l'icona 📝 accanto al nome, oppure
 direttamente in `changelog.php`.
+
+## Roadmap e limiti noti
+
+- **Nessuna autenticazione**: chiunque raggiunga l'URL può leggere/modificare/cancellare i dati (vedi
+  [Sicurezza](#sicurezza)). Un sistema di login è previsto per una versione futura, prima di esporre
+  l'app oltre la rete locale.
+- **Pensata per un singolo nucleo familiare/utenza**: non gestisce più abitazioni o più utenti con dati
+  separati.
+- **Nessuna suite di test automatizzati**: le verifiche vengono fatte manualmente prima di ogni
+  rilascio (vedi `changelog.php`).
+- **Compatibilità**: testato solo su Fedora 44; su altre distribuzioni potrebbero servire aggiustamenti
+  a pacchetti, percorsi e configurazione SELinux/Apache.
+
+## Licenza
+
+Copyright riservato — vedi [`LICENSE`](LICENSE). Il codice è pubblico a scopo di consultazione, non è
+concesso il riutilizzo senza autorizzazione.

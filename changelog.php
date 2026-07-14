@@ -18,6 +18,9 @@ $release = [
       'Corretto un bug latente nella pagina TARI: un numero avviso composto solo da cifre veniva salvato da SQLite come numero anziché testo, causando un errore fatale in visualizzazione.',
       'Aggiunto `app/seed_demo.php`: genera bollette di esempio (dati inventati) per tutte le utenze alla prima installazione, senza mai toccare un database che contiene già bollette reali.',
       'Aggiunto un pulsante "🗑️ Svuota anno" su ogni riquadro annuale di ogni dashboard, per eliminare in un colpo solo le bollette demo (o comunque quelle di un anno) e ripartire con i propri dati.',
+      'Pubblicato il repository su GitHub (github.com/maccumaccu/openbollettedb).',
+      'README: aggiunta la guida di installazione su Fedora 44 (pacchetti, servizi Apache/php-fpm, firewalld, permessi, SELinux, configurazione Apache per data/) e una sezione di backup del database.',
+      'Aggiunti LICENSE (tutti i diritti riservati), badge informativi e una sezione "Roadmap e limiti noti" nel README.',
     ],
   ],
   [
