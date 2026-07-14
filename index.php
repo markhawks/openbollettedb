@@ -39,6 +39,7 @@ switch ($u) {
   case 'bonifica':
     require 'pages/dashboard_bonifica.php';
     break;
+  case 'acqua':
   default:
     require 'pages/dashboard_acqua.php';
 }

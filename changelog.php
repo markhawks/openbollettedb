@@ -26,6 +26,7 @@ $release = [
       'Aggiunta un\'icona (favicon 🧾) mostrata nella scheda del browser, prima assente.',
       'Corretto un bug nella pagina Gas: conteneva un secondo documento HTML annidato (doppio head/body e Chart.js caricato due volte), invisibile a schermo ma non valido.',
       'Aggiunti screenshot (Luce, Gas, Acqua, form Nuova bolletta) nel README, generati con dati demo.',
+      'Corretto il link "Acqua" del menu (usava una maiuscola non riconosciuta dal routing) e aggiunto un case esplicito per acqua in index.php, invece di affidarsi implicitamente al ramo "default".',
     ],
   ],
   [
