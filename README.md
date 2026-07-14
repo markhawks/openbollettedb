@@ -32,7 +32,7 @@ sudo firewall-cmd --reload
 
 # 4. Clonazione del progetto nella webroot
 cd /var/www/html
-sudo git clone https://github.com/maccumaccu/openbollettedb.git OpenBolletteDB
+sudo git clone https://github.com/markhawks/openbollettedb.git OpenBolletteDB
 cd OpenBolletteDB
 
 # 5. Permessi: php-fpm su Fedora gira come utente/gruppo "apache" e deve poter scrivere
