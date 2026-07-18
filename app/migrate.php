@@ -47,6 +47,20 @@ CREATE INDEX IF NOT EXISTS idx_metrics_bill_key
 ON bill_metrics(bill_id, key);
 ");
 
+$pdo->exec("
+CREATE TABLE IF NOT EXISTS users (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  username TEXT NOT NULL UNIQUE,
+  password_hash TEXT NOT NULL,
+  display_name TEXT NOT NULL,         -- nome dell'utenza mostrato nel menu di login
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+");
+
+# Seed utente di default (un'unica utenza finché la multi-utenza non è implementata)
+$stmt = $pdo->prepare("INSERT OR IGNORE INTO users(username, password_hash, display_name) VALUES (?, ?, ?)");
+$stmt->execute(['admin', password_hash('admin2026', PASSWORD_DEFAULT), 'Default']);
+
 # Seed utilities
 $seed = [
   ['luce', 'Energia Elettrica'],

@@ -4,6 +4,15 @@ declare(strict_types=1);
 /* Storico versioni: aggiungere una nuova voce in cima ad ogni rilascio */
 $release = [
   [
+    'version' => 'v1.2',
+    'date'    => '18/07/2026',
+    'changes' => [
+      'Aggiunta una pagina di accesso (login.php): l\'app ora richiede l\'autenticazione prima di poter consultare o modificare le bollette (in precedenza chiunque raggiungesse l\'URL poteva farlo liberamente).',
+      'Creato un utente predefinito "admin" (password iniziale "admin2026", da cambiare) come unica utenza disponibile: la gestione multi-utenza non è ancora implementata, quindi il menu "Utenza" nella schermata di login mostra solo "Default".',
+      'Aggiunto il pulsante "🔓 Esci" nel menu in alto per terminare la sessione.',
+    ],
+  ],
+  [
     'version' => 'v1.1',
     'date'    => '14/07/2026',
     'changes' => [

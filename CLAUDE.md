@@ -44,11 +44,28 @@ of `index.php` reuses. Keep that variable name/scope if you touch either file.
   - shared: `extra_adjust` (EUR, can be negative for a bonus/credit)
   When adding a new metric, follow this pattern: pick a short snake_case key, a unit string, and gate
   insertion on `$utilityCode === '...'` plus `is_numeric()` (see `new_bill.php`).
+- `users`: id/username/password_hash/display_name, seeded with a single `admin` account by
+  `app/migrate.php`. No FK to anything else yet — there's no per-user data ownership, just a login
+  gate (see Auth below).
 
 **DB access**: `app/db.php` exposes a single `db(): PDO` function opening
 `data/openbollettedb.sqlite` with `PRAGMA foreign_keys = ON` and `PRAGMA journal_mode = WAL` — every
 entry point calls `db()` itself (no shared connection/DI container). Keep these pragmas; don't remove
 them. All files use plain PDO prepared statements, `PDO::FETCH_ASSOC`, and `declare(strict_types=1);`.
+`function db()` is wrapped in `if (!function_exists('db')) { ... }` — required because `app/db.php` is
+loaded via plain `require` (not `require_once`) from several entry points (`app/auth.php` and every
+`pages/dashboard_*.php`), so on any request that touches both, the file is parsed/executed twice in the
+same process; without the guard the second pass fatals with "Cannot redeclare function db()". The guard
+must wrap the function textually inside the `if` (not `if (...) return;` before an unconditional
+declaration) — PHP early-binds a function that's unconditionally reachable in the file regardless of a
+preceding runtime `return`, so only nesting it inside the `if` defers binding to runtime.
+
+**Auth**: `app/auth.php` (`require_login()`, `attempt_login()`, `logout_user()`, `current_user()`) guards
+every entry point via PHP sessions — call `require_login()` as the very first statement (before any
+output) in any new top-level script that touches bill data; `login.php`/`logout.php` are the only
+unguarded routes. Single shared `users` row seeded by `app/migrate.php` (`admin` / `admin2026`, hashed
+with `password_hash()`); there's no real multi-user support yet — the "Utenza" selector on the login
+page is a disabled placeholder showing only "Default".
 
 **CRUD flow**:
 - Create: `new_bill.php?u=<code>` — one big form whose visible fields switch on `$utilityCode` (see the

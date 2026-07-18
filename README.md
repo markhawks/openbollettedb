@@ -111,11 +111,13 @@ e ripartire con i propri dati reali.
 
 ## Struttura
 
-- `index.php` — routing minimale via `?u=<codice_utenza>`
+- `index.php` — routing minimale via `?u=<codice_utenza>` (richiede il login)
 - `pages/dashboard_*.php` — una dashboard per ogni utenza (luce, gas, acqua, tari, bonifica)
 - `new_bill.php` / `edit_bill.php` / `delete_bill.php` / `reset_year.php` — CRUD bollette
+- `login.php` / `logout.php` — autenticazione (vedi [Sicurezza](#sicurezza))
+- `app/auth.php` — gestione sessione utente (`require_login()`, `attempt_login()`, `logout_user()`)
 - `app/db.php` — connessione PDO/SQLite condivisa
-- `app/migrate.php` — schema del database e seed delle utenze
+- `app/migrate.php` — schema del database (incluso l'utente predefinito) e seed delle utenze
 - `app/seed_demo.php` — genera bollette di esempio per la prima installazione (dati inventati)
 - `app/csrf.php` — token di sessione usato per proteggere le azioni distruttive (elimina/svuota anno)
 - `changelog.php` — note di rilascio, raggiungibile dall'icona 📝 nell'header
@@ -141,9 +143,16 @@ per una conservazione più sicura.
 
 ## Sicurezza
 
-Pensata per uso **locale/LAN**, senza autenticazione: chiunque raggiunga l'URL può leggere e
-modificare i dati. Non esporre questa app direttamente su Internet senza aggiungere un livello di
-autenticazione.
+Pensata per uso **locale/LAN**. Dalla v1.2 è presente una pagina di login (`login.php`) con un unico
+utente predefinito:
+
+- utente: `admin`
+- password iniziale: `admin2026` (da cambiare direttamente nel database non appena possibile)
+
+Non è ancora presente la gestione multi-utente/multi-utenza (il selettore "Utenza" nella schermata di
+login mostra solo "Default"): è un unico account condiviso, pensato per proteggere l'accesso da chi si
+trova sulla stessa rete, non per isolare più nuclei familiari. Non esporre comunque questa app
+direttamente su Internet senza ulteriori accorgimenti (HTTPS, cambio password, ecc.).
 
 ## Note di rilascio
 
@@ -152,11 +161,12 @@ direttamente in `changelog.php`.
 
 ## Roadmap e limiti noti
 
-- **Nessuna autenticazione**: chiunque raggiunga l'URL può leggere/modificare/cancellare i dati (vedi
-  [Sicurezza](#sicurezza)). Un sistema di login è previsto per una versione futura, prima di esporre
-  l'app oltre la rete locale.
-- **Pensata per un singolo nucleo familiare/utenza**: non gestisce più abitazioni o più utenti con dati
-  separati.
+- **Autenticazione a singolo utente**: dalla v1.2 è richiesto il login, ma esiste un solo account
+  condiviso (vedi [Sicurezza](#sicurezza)); non ci sono ruoli, permessi differenziati o gestione utenti
+  da interfaccia.
+- **Pensata per un singolo nucleo familiare/utenza**: il selettore "Utenza" nella schermata di login è
+  già presente in previsione della multi-utenza, ma al momento non è funzionante (mostra solo
+  "Default") e non gestisce più abitazioni o più utenti con dati separati.
 - **Nessuna suite di test automatizzati**: le verifiche vengono fatte manualmente prima di ogni
   rilascio (vedi `changelog.php`).
 - **Compatibilità**: testato solo su Fedora 44; su altre distribuzioni potrebbero servire aggiustamenti

@@ -1,4 +1,6 @@
 <?php
+require __DIR__ . '/app/auth.php';
+require_login();
 require __DIR__ . '/app/csrf.php';
 $csrfToken = csrf_token();
 
