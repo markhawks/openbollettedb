@@ -73,7 +73,9 @@ $amounts = array_map(fn($v) => (float)$v, array_column($chartData, 'totale'));
       <h1>🗑️ TARI – Tassa Rifiuti</h1>
       <div class="sub">Gestione bollette rifiuti</div>
     </div>
+    <?php if (is_admin()): ?>
     <a class="btn" href="new_bill.php?u=tari">+ Nuova TARI</a>
+    <?php endif; ?>
   </header>
 
  <section class="card">
@@ -89,12 +91,14 @@ $amounts = array_map(fn($v) => (float)$v, array_column($chartData, 'totale'));
     <section class="card">
       <div class="card-year-header">
         <h2>Avvisi TARI – <?= $year ?></h2>
+        <?php if (is_admin()): ?>
         <a class="btn-reset-year"
            href="reset_year.php?u=tari&year=<?= $year ?>&csrf=<?= urlencode($csrfToken) ?>"
            onclick="return confirmResetAnno('TARI', <?= $year ?>);"
            title="Elimina tutti gli avvisi TARI di questo anno">
           🗑️ Svuota anno
         </a>
+        <?php endif; ?>
       </div>
       <table>
         <thead>
@@ -159,10 +163,14 @@ $amounts = array_map(fn($v) => (float)$v, array_column($chartData, 'totale'));
 
     <!-- AZIONI -->
     <td style="text-align:center; white-space:nowrap;">
+      <?php if (is_admin()): ?>
       <a href="edit_bill.php?id=<?= $b['id'] ?>&u=tari" title="Modifica">✏️</a>
       <a href="delete_bill.php?id=<?= $b['id'] ?>&u=tari&csrf=<?= urlencode($csrfToken) ?>"
          onclick="return confirm('Eliminare questo avviso TARI?');"
          title="Elimina">🗑️</a>
+      <?php else: ?>
+      <span class="muted">—</span>
+      <?php endif; ?>
     </td>
   </tr>
 <?php endforeach; ?>

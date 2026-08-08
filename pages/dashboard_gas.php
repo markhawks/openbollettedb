@@ -126,7 +126,9 @@ function gasGrowthBadge(array $crescita, string $label, string $unit): string {
     <h1>🔥 Gas Naturale</h1>
     <div class="sub">Consumi, letture e costi</div>
   </div>
+  <?php if (is_admin()): ?>
   <a class="btn" href="new_bill.php?u=gas">+ Nuova bolletta</a>
+  <?php endif; ?>
 </header>
 
 <!-- GRAFICO SMC -->
@@ -157,12 +159,14 @@ function gasGrowthBadge(array $crescita, string $label, string $unit): string {
         </span>
       <?php endif; ?>
     </h2>
+    <?php if (is_admin()): ?>
     <a class="btn-reset-year"
        href="reset_year.php?u=gas&year=<?= $year ?>&csrf=<?= urlencode($csrfToken) ?>"
        onclick="return confirmResetAnno('Gas', <?= $year ?>);"
        title="Elimina tutte le bollette Gas di questo anno">
       🗑️ Svuota anno
     </a>
+    <?php endif; ?>
   </div>
   <table>
     <thead>
@@ -254,6 +258,7 @@ function gasGrowthBadge(array $crescita, string $label, string $unit): string {
 
   <!-- AZIONI -->
   <td style="text-align:center; white-space: nowrap;">
+    <?php if (is_admin()): ?>
     <a href="edit_bill.php?id=<?= $b['id'] ?>&u=gas"
        title="Modifica"
        style="text-decoration:none; margin-right:8px;">
@@ -265,6 +270,9 @@ function gasGrowthBadge(array $crescita, string $label, string $unit): string {
        style="text-decoration:none;">
       🗑️
     </a>
+    <?php else: ?>
+    <span class="muted">—</span>
+    <?php endif; ?>
   </td>
 </tr>
 

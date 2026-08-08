@@ -71,7 +71,9 @@ $amounts = array_map(fn($v) => (float)$v, array_column($chartData, 'totale'));
       <h1>🌾 Bonifica – Consorzio di bonifica</h1>
       <div class="sub">Gestione bollette annuali</div>
     </div>
+    <?php if (is_admin()): ?>
     <a class="btn" href="new_bill.php?u=bonifica">+ Nuova Bonifica</a>
+    <?php endif; ?>
   </header>
 
   <section class="card">
@@ -87,12 +89,14 @@ $amounts = array_map(fn($v) => (float)$v, array_column($chartData, 'totale'));
     <section class="card">
       <div class="card-year-header">
         <h2>Avvisi Bonifica – <?= $year ?></h2>
+        <?php if (is_admin()): ?>
         <a class="btn-reset-year"
            href="reset_year.php?u=bonifica&year=<?= $year ?>&csrf=<?= urlencode($csrfToken) ?>"
            onclick="return confirmResetAnno('Bonifica', <?= $year ?>);"
            title="Elimina tutti gli avvisi Bonifica di questo anno">
           🗑️ Svuota anno
         </a>
+        <?php endif; ?>
       </div>
       <table>
         <thead>
@@ -145,10 +149,14 @@ $amounts = array_map(fn($v) => (float)$v, array_column($chartData, 'totale'));
 
     <!-- AZIONI -->
     <td style="text-align:center; white-space:nowrap;">
+      <?php if (is_admin()): ?>
       <a href="edit_bill.php?id=<?= $b['id'] ?>&u=bonifica" title="Modifica">✏️</a>
       <a href="delete_bill.php?id=<?= $b['id'] ?>&u=bonifica&csrf=<?= urlencode($csrfToken) ?>"
          onclick="return confirm('Eliminare questo avviso Bonifica?');"
          title="Elimina">🗑️</a>
+      <?php else: ?>
+      <span class="muted">—</span>
+      <?php endif; ?>
     </td>
   </tr>
 <?php endforeach; ?>

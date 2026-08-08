@@ -30,7 +30,7 @@ function attempt_login(string $username, string $password): bool
 {
     auth_start_session();
 
-    $stmt = db()->prepare('SELECT id, username, password_hash, display_name FROM users WHERE username = ?');
+    $stmt = db()->prepare('SELECT id, username, password_hash, display_name, role FROM users WHERE username = ?');
     $stmt->execute([$username]);
     $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
@@ -43,6 +43,7 @@ function attempt_login(string $username, string $password): bool
         'id'           => (int)$user['id'],
         'username'     => $user['username'],
         'display_name' => $user['display_name'],
+        'role'         => $user['role'],
     ];
     return true;
 }
@@ -52,4 +53,19 @@ function logout_user(): void
     auth_start_session();
     $_SESSION = [];
     session_destroy();
+}
+
+function is_admin(): bool
+{
+    $user = current_user();
+    return $user !== null && ($user['role'] ?? 'user') === 'admin';
+}
+
+function require_admin(): void
+{
+    require_login();
+    if (!is_admin()) {
+        http_response_code(403);
+        die('Il tuo utente ha accesso in sola lettura: non puoi modificare le bollette.');
+    }
 }

@@ -132,7 +132,9 @@ function luceGrowthBadge(array $crescita, string $label, string $unit): string {
     <h1>💡 Energia Elettrica</h1>
     <div class="sub">Storico consumi e costi</div>
   </div>
+  <?php if (is_admin()): ?>
   <a class="btn" href="new_bill.php?u=luce">+ Nuova bolletta</a>
+  <?php endif; ?>
 </header>
 
 <!-- GRAFICO CONSUMI -->
@@ -163,12 +165,14 @@ function luceGrowthBadge(array $crescita, string $label, string $unit): string {
         </span>
       <?php endif; ?>
     </h2>
+    <?php if (is_admin()): ?>
     <a class="btn-reset-year"
        href="reset_year.php?u=luce&year=<?= $year ?>&csrf=<?= urlencode($csrfToken) ?>"
        onclick="return confirmResetAnno('Luce', <?= $year ?>);"
        title="Elimina tutte le bollette Luce di questo anno">
       🗑️ Svuota anno
     </a>
+    <?php endif; ?>
   </div>
   <table>
     <thead>
@@ -239,6 +243,7 @@ foreach ($bills as $b):
     </td>
     <td class="muted"><?= htmlspecialchars($b['notes'] ?? '') ?></td>
     <td style="text-align:center; white-space: nowrap;">
+      <?php if (is_admin()): ?>
       <a href="edit_bill.php?id=<?= $b['id'] ?>&u=luce"
         title="Modifica"
         style="text-decoration:none; margin-right:8px;">
@@ -250,6 +255,9 @@ foreach ($bills as $b):
         onclick="return confirm('Eliminare questa bolletta?');">
         🗑️
       </a>
+      <?php else: ?>
+      <span class="muted">—</span>
+      <?php endif; ?>
     </td>
 
   </tr>

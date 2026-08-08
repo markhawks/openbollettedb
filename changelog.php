@@ -4,6 +4,18 @@ declare(strict_types=1);
 /* Storico versioni: aggiungere una nuova voce in cima ad ogni rilascio */
 $release = [
   [
+    'version' => 'v1.3',
+    'date'    => '08/08/2026',
+    'changes' => [
+      'Aggiunta la pagina "Gestione utenti" (account.php), raggiungibile dall\'icona ⚙️ Utente nel menu in alto: ogni utente può cambiare il proprio nome e la propria password senza intervenire sul database.',
+      'Introdotti i ruoli utente: un amministratore può creare altri utenti legati alle stesse bollette, assegnare il ruolo "Amministratore" (lettura e scrittura) o "Sola lettura", reimpostare la password di un altro utente ed eliminarlo. Per evitare di restare bloccati fuori dall\'app, un amministratore non può modificare o eliminare il proprio account da questa sezione (si usa "Il mio profilo").',
+      'Gli utenti con ruolo "Sola lettura" non vedono più i pulsanti "+ Nuova bolletta", "✏️ Modifica", "🗑️ Elimina" e "🗑️ Svuota anno" nelle dashboard; l\'accesso a new_bill.php, edit_bill.php, delete_bill.php e reset_year.php è comunque bloccato anche lato server per chi non è amministratore, non solo nascosto in pagina.',
+      'Corretto il menu in alto: i pulsanti (Luce, Gas, Acqua, Tari, Bonifica, ⚙️ Utente, 🔓 Esci) non vanno più a capo aggiungendo nuove voci; pagina allargata per ospitarli su una sola riga.',
+      'Rinominata la voce di menu "⚙️ Utenza" in "⚙️ Utente".',
+      'Corretta la codifica dei caratteri di index.html (mancava il charset UTF-8, i puntini di sospensione potevano apparire come simboli corrotti nel redirect verso index.php).',
+    ],
+  ],
+  [
     'version' => 'v1.2',
     'date'    => '18/07/2026',
     'changes' => [

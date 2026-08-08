@@ -1,0 +1,107 @@
+/* ===================================================== */
+/* GESTIONE UTENZA (account.php)                        */
+/* ===================================================== */
+
+.account-title {
+  margin: 0 0 6px;
+  font-size: 18px;
+}
+
+.account-note {
+  margin: 0 0 18px;
+}
+
+.account-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 14px;
+  max-width: 360px;
+}
+
+.account-field label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #556;
+}
+
+.account-field input[type="text"],
+.account-field input[type="password"] {
+  padding: 11px 14px;
+  border-radius: 10px;
+  border: 1px solid #d7d9e2;
+  background: #fafbff;
+  font-size: 15px;
+  font-family: inherit;
+  box-sizing: border-box;
+}
+
+.account-field input:focus {
+  outline: none;
+  border-color: #1f6feb;
+  background: #fff;
+}
+
+.account-subtitle {
+  margin: 24px 0 12px;
+  font-size: 15px;
+  border-top: 1px solid #eef0f6;
+  padding-top: 20px;
+}
+
+.account-inline-form {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.account-inline-form select,
+.account-inline-form input[type="password"] {
+  padding: 6px 8px;
+  border-radius: 8px;
+  border: 1px solid #d7d9e2;
+  background: #fafbff;
+  font-size: 13px;
+  font-family: inherit;
+}
+
+.account-inline-form input[type="password"] {
+  width: 130px;
+}
+
+.account-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.account-hint {
+  font-size: 12px;
+  color: #889;
+  margin: -8px 0 14px;
+  max-width: 360px;
+}
+
+.account-success {
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  color: #15803d;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 10px 12px;
+  border-radius: 10px;
+  margin-bottom: 16px;
+  max-width: 360px;
+}
+
+.account-error {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #b91c1c;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 10px 12px;
+  border-radius: 10px;
+  margin-bottom: 16px;
+  max-width: 360px;
+}

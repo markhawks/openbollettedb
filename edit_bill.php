@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 require __DIR__ . '/app/auth.php';
-require_login();
+require_admin();
 require __DIR__ . '/app/db.php';
 
 $pdo = db();

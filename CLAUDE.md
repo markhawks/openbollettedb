@@ -44,9 +44,10 @@ of `index.php` reuses. Keep that variable name/scope if you touch either file.
   - shared: `extra_adjust` (EUR, can be negative for a bonus/credit)
   When adding a new metric, follow this pattern: pick a short snake_case key, a unit string, and gate
   insertion on `$utilityCode === '...'` plus `is_numeric()` (see `new_bill.php`).
-- `users`: id/username/password_hash/display_name, seeded with a single `admin` account by
-  `app/migrate.php`. No FK to anything else yet — there's no per-user data ownership, just a login
-  gate (see Auth below).
+- `users`: id/username/password_hash/display_name/role, seeded with a single `admin` account
+  (`role = 'admin'`) by `app/migrate.php`. `role` is `'admin'` (read/write) or `'user'` (read-only) —
+  see Auth below. No FK to anything else — every user sees the same `bills`/`bill_metrics`, there's no
+  per-user data ownership, `role` only gates which actions a session is allowed to perform.
 
 **DB access**: `app/db.php` exposes a single `db(): PDO` function opening
 `data/openbollettedb.sqlite` with `PRAGMA foreign_keys = ON` and `PRAGMA journal_mode = WAL` — every
@@ -60,12 +61,31 @@ must wrap the function textually inside the `if` (not `if (...) return;` before 
 declaration) — PHP early-binds a function that's unconditionally reachable in the file regardless of a
 preceding runtime `return`, so only nesting it inside the `if` defers binding to runtime.
 
-**Auth**: `app/auth.php` (`require_login()`, `attempt_login()`, `logout_user()`, `current_user()`) guards
-every entry point via PHP sessions — call `require_login()` as the very first statement (before any
-output) in any new top-level script that touches bill data; `login.php`/`logout.php` are the only
-unguarded routes. Single shared `users` row seeded by `app/migrate.php` (`admin` / `admin2026`, hashed
-with `password_hash()`); there's no real multi-user support yet — the "Utenza" selector on the login
-page is a disabled placeholder showing only "Default".
+**Auth**: `app/auth.php` (`require_login()`, `require_admin()`, `is_admin()`, `attempt_login()`,
+`logout_user()`, `current_user()`) guards every entry point via PHP sessions. `attempt_login()` copies
+`role` into `$_SESSION['user']['role']` at login time; `is_admin()` just checks that cached value, it
+does not re-query the DB. `require_login()` — call as the very first statement (before any output) in
+any new top-level script that only *reads* bill data. `require_admin()` (which calls `require_login()`
+internally, then 403s with `die()` if `role !== 'admin'`) guards the four write entry points
+(`new_bill.php`, `edit_bill.php`, `delete_bill.php`, `reset_year.php`) — use it instead of
+`require_login()` for any new script that inserts/updates/deletes bills. `login.php`/`logout.php` are
+the only unguarded routes. Because the role lives in the session, a role change made by an admin via
+`account.php` only takes effect for the affected user on their *next* login — their current session
+keeps the old role until they re-authenticate.
+
+**Roles & `account.php`**: `users.role` is `'admin'` (read/write) or `'user'` (read-only); every user
+sees the same bills, `role` only gates write access. `account.php` (linked from the "⚙️ Utente" item in
+`partials/header.php`) has two parts: a self-service section, open to any logged-in user, to change
+their own `display_name`/`password_hash` (updates `$_SESSION['user']['display_name']` in place so the
+header reflects it without a re-login); and a `is_admin()`-gated user-management section where an admin
+adds users, changes another user's role, resets another user's password, or deletes another user. Every
+admin-only action there explicitly rejects `user_id === current_user()['id']` server-side — an admin
+can't demote/reset/delete *themselves* from that table (self-service section is the only way to touch
+your own row), which is what keeps at least one admin always able to log in without needing an
+explicit "last admin" count check. `pages/dashboard_*.php` wrap every write control (`+ Nuova
+bolletta`, ✏️, 🗑️, "Svuota anno") in `<?php if (is_admin()): ?>` — this is presentation only, the real
+enforcement is `require_admin()` in the target scripts; keep both in sync when adding a new write
+action.
 
 **CRUD flow**:
 - Create: `new_bill.php?u=<code>` — one big form whose visible fields switch on `$utilityCode` (see the

@@ -52,14 +52,28 @@ CREATE TABLE IF NOT EXISTS users (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   username TEXT NOT NULL UNIQUE,
   password_hash TEXT NOT NULL,
-  display_name TEXT NOT NULL,         -- nome dell'utenza mostrato nel menu di login
+  display_name TEXT NOT NULL,         -- nome mostrato nell'header e nella pagina utenti
+  role TEXT NOT NULL DEFAULT 'user',  -- 'admin' (può scrivere) oppure 'user' (sola lettura)
   created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 ");
 
-# Seed utente di default (un'unica utenza finché la multi-utenza non è implementata)
-$stmt = $pdo->prepare("INSERT OR IGNORE INTO users(username, password_hash, display_name) VALUES (?, ?, ?)");
+# Utenti già esistenti creati prima dell'introduzione dei ruoli: aggiunge la colonna
+# se manca (CREATE TABLE IF NOT EXISTS non tocca lo schema di una tabella già presente).
+$hasRoleColumn = false;
+foreach ($pdo->query("PRAGMA table_info(users)") as $col) {
+    if ($col['name'] === 'role') { $hasRoleColumn = true; break; }
+}
+if (!$hasRoleColumn) {
+    $pdo->exec("ALTER TABLE users ADD COLUMN role TEXT NOT NULL DEFAULT 'user'");
+}
+
+# Seed utente di default, come unico amministratore
+$stmt = $pdo->prepare("INSERT OR IGNORE INTO users(username, password_hash, display_name, role) VALUES (?, ?, ?, 'admin')");
 $stmt->execute(['admin', password_hash('admin2026', PASSWORD_DEFAULT), 'Default']);
+
+# Promuove l'account admin anche se la riga esisteva già da prima dei ruoli
+$pdo->exec("UPDATE users SET role = 'admin' WHERE username = 'admin'");
 
 # Seed utilities
 $seed = [

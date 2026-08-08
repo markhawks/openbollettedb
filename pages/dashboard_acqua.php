@@ -82,7 +82,9 @@ $consumi = array_map(fn($v) => (float)$v, array_column($chartData, 'consumo'));
       <h1>💧 Acqua</h1>
       <div class="sub">Gestione bollette acqua</div>
     </div>
+    <?php if (is_admin()): ?>
     <a class="btn" href="new_bill.php?u=acqua">+ Nuova Bolletta</a>
+    <?php endif; ?>
   </header>
 
   <?php if (!$billsByYear): ?>
@@ -141,12 +143,14 @@ $consumi = array_map(fn($v) => (float)$v, array_column($chartData, 'consumo'));
 <section class="card">
   <div class="card-year-header">
     <h2>Bollette Acqua – <?= $year ?></h2>
+    <?php if (is_admin()): ?>
     <a class="btn-reset-year"
        href="reset_year.php?u=acqua&year=<?= $year ?>&csrf=<?= urlencode($csrfToken) ?>"
        onclick="return confirmResetAnno('Acqua', <?= $year ?>);"
        title="Elimina tutte le bollette Acqua di questo anno">
       🗑️ Svuota anno
     </a>
+    <?php endif; ?>
   </div>
 
   <table>
@@ -230,9 +234,13 @@ $consumi = array_map(fn($v) => (float)$v, array_column($chartData, 'consumo'));
   <td class="muted"><?= nl2br(htmlspecialchars($b['notes'] ?? '')) ?></td>
 
   <td style="text-align:center;">
+    <?php if (is_admin()): ?>
     <a href="edit_bill.php?id=<?= $b['id'] ?>&u=acqua">✏️</a>
     <a href="delete_bill.php?id=<?= $b['id'] ?>&u=acqua&csrf=<?= urlencode($csrfToken) ?>"
        onclick="return confirm('Eliminare questa bolletta acqua?');">🗑️</a>
+    <?php else: ?>
+    <span class="muted">—</span>
+    <?php endif; ?>
   </td>
 </tr>
 <?php endforeach; ?>

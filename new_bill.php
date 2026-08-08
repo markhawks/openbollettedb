@@ -2,7 +2,7 @@
 declare(strict_types=1);
 
 require __DIR__ . '/app/auth.php';
-require_login();
+require_admin();
 require __DIR__ . '/app/db.php';
 
 $firstDayPrevMonth = date('Y-m-01', strtotime('first day of last month'));

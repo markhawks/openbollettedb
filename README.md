@@ -115,7 +115,10 @@ e ripartire con i propri dati reali.
 - `pages/dashboard_*.php` — una dashboard per ogni utenza (luce, gas, acqua, tari, bonifica)
 - `new_bill.php` / `edit_bill.php` / `delete_bill.php` / `reset_year.php` — CRUD bollette
 - `login.php` / `logout.php` — autenticazione (vedi [Sicurezza](#sicurezza))
-- `app/auth.php` — gestione sessione utente (`require_login()`, `attempt_login()`, `logout_user()`)
+- `account.php` — gestione utenti (icona ⚙️ Utente nel menu in alto): profilo/password personali per
+  tutti, più creazione utenti, ruoli, reset password e cancellazione per gli amministratori
+- `app/auth.php` — gestione sessione utente e permessi (`require_login()`, `require_admin()`,
+  `is_admin()`, `attempt_login()`, `logout_user()`)
 - `app/db.php` — connessione PDO/SQLite condivisa
 - `app/migrate.php` — schema del database (incluso l'utente predefinito) e seed delle utenze
 - `app/seed_demo.php` — genera bollette di esempio per la prima installazione (dati inventati)
@@ -143,16 +146,32 @@ per una conservazione più sicura.
 
 ## Sicurezza
 
-Pensata per uso **locale/LAN**. Dalla v1.2 è presente una pagina di login (`login.php`) con un unico
+Pensata per uso **locale/LAN**. Dalla v1.2 è presente una pagina di login (`login.php`) con un
 utente predefinito:
 
 - utente: `admin`
-- password iniziale: `admin2026` (da cambiare direttamente nel database non appena possibile)
+- password iniziale: `admin2026`
 
-Non è ancora presente la gestione multi-utente/multi-utenza (il selettore "Utenza" nella schermata di
-login mostra solo "Default"): è un unico account condiviso, pensato per proteggere l'accesso da chi si
-trova sulla stessa rete, non per isolare più nuclei familiari. Non esporre comunque questa app
-direttamente su Internet senza ulteriori accorgimenti (HTTPS, cambio password, ecc.).
+Dalla v1.3 la password e il nome visualizzato si possono cambiare direttamente dall'app, dalla pagina
+"Gestione utenti" (`account.php`, icona ⚙️ Utente nel menu in alto) — non serve più intervenire sul
+database. Dalla stessa pagina un amministratore può anche creare altri utenti legati alle stesse
+bollette (tutti gli utenti vedono e condividono gli stessi dati, non c'è isolamento per nucleo
+familiare) assegnando uno di due ruoli:
+
+- **Amministratore**: può leggere, aggiungere, modificare ed eliminare le bollette, oltre a gestire
+  gli altri utenti.
+- **Sola lettura**: può solo consultare le dashboard; i pulsanti di scrittura sono nascosti in pagina
+  e l'accesso a `new_bill.php`/`edit_bill.php`/`delete_bill.php`/`reset_year.php` è comunque negato
+  lato server (`require_admin()`), non solo nascosto nell'interfaccia.
+
+Per evitare di restare bloccati fuori dall'app, un amministratore non può modificare il ruolo,
+reimpostare la password o eliminare il proprio account dalla pagina "Utenti": per il proprio account
+si usa sempre la sezione "Il mio profilo" in cima alla stessa pagina.
+
+Il selettore "Utenza" nella schermata di login (che mostra solo "Default") resta invece un
+segnaposto per un'eventuale futura multi-utenza (più abitazioni con bollette separate) — un concetto
+diverso dai ruoli utente, non ancora implementato. Non esporre comunque questa app direttamente su
+Internet senza ulteriori accorgimenti (HTTPS, ecc.).
 
 ## Note di rilascio
 
@@ -161,12 +180,12 @@ direttamente in `changelog.php`.
 
 ## Roadmap e limiti noti
 
-- **Autenticazione a singolo utente**: dalla v1.2 è richiesto il login, ma esiste un solo account
-  condiviso (vedi [Sicurezza](#sicurezza)); non ci sono ruoli, permessi differenziati o gestione utenti
-  da interfaccia.
+- **Autenticazione multi-utente con ruoli**: dalla v1.3 più utenti possono avere ciascuno le proprie
+  credenziali (vedi [Sicurezza](#sicurezza)), con ruolo Amministratore o Sola lettura, ma tutti
+  condividono le stesse bollette: non c'è isolamento dei dati per utente.
 - **Pensata per un singolo nucleo familiare/utenza**: il selettore "Utenza" nella schermata di login è
-  già presente in previsione della multi-utenza, ma al momento non è funzionante (mostra solo
-  "Default") e non gestisce più abitazioni o più utenti con dati separati.
+  già presente in previsione di una futura multi-utenza (più abitazioni, ciascuna con le proprie
+  bollette separate), ma al momento non è funzionante (mostra solo "Default").
 - **Nessuna suite di test automatizzati**: le verifiche vengono fatte manualmente prima di ogni
   rilascio (vedi `changelog.php`).
 - **Compatibilità**: testato solo su Fedora 44; su altre distribuzioni potrebbero servire aggiustamenti
