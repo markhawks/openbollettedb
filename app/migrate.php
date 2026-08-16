@@ -38,8 +38,23 @@ CREATE TABLE IF NOT EXISTS bill_metrics (
 ");
 
 $pdo->exec("
+CREATE TABLE IF NOT EXISTS bill_readings (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  bill_id INTEGER NOT NULL,
+  reading_date TEXT NOT NULL,         -- YYYY-MM-DD
+  reading_value REAL NOT NULL,        -- lettura contatore in m3
+  FOREIGN KEY (bill_id) REFERENCES bills(id) ON DELETE CASCADE
+);
+");
+
+$pdo->exec("
 CREATE INDEX IF NOT EXISTS idx_bills_utility_period
 ON bills(utility_id, period_start, period_end);
+");
+
+$pdo->exec("
+CREATE INDEX IF NOT EXISTS idx_readings_bill
+ON bill_readings(bill_id, reading_date);
 ");
 
 $pdo->exec("

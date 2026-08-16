@@ -44,6 +44,12 @@ of `index.php` reuses. Keep that variable name/scope if you touch either file.
   - shared: `extra_adjust` (EUR, can be negative for a bonus/credit)
   When adding a new metric, follow this pattern: pick a short snake_case key, a unit string, and gate
   insertion on `$utilityCode === '...'` plus `is_numeric()` (see `new_bill.php`).
+- `bill_readings`: optional intermediate meter readings for a bill — `bill_id`, `reading_date`
+  (`YYYY-MM-DD`), `reading_value` (REAL, m³). FK `bill_id → bills(id) ON DELETE CASCADE`. Currently only
+  used by `acqua` (form fields `reading_date[]`/`reading_value[]`, repeatable rows), unlike
+  `bill_metrics` it's a plain one-row-per-reading list, not a per-bill key/value pivot — there's no
+  `key` column because a bill can have many readings of the same "kind". `edit_bill.php` deletes and
+  re-inserts all of a bill's rows on save, same pattern as `bill_metrics`.
 - `users`: id/username/password_hash/display_name/role, seeded with a single `admin` account
   (`role = 'admin'`) by `app/migrate.php`. `role` is `'admin'` (read/write) or `'user'` (read-only) —
   see Auth below. No FK to anything else — every user sees the same `bills`/`bill_metrics`, there's no
@@ -98,7 +104,8 @@ action.
   - `edit_bill.php` mirrors this: loads the existing bill + metrics, deletes all existing
     `bill_metrics` for that bill on submit, and re-inserts the relevant ones for that utility (same
     per-utility gating as `new_bill.php` — keep the two in sync when changing metric fields).
-  - `delete_bill.php?id=&u=` deletes the `bills` row; `bill_metrics` cascade-delete via the FK.
+  - `delete_bill.php?id=&u=` deletes the `bills` row; `bill_metrics` and `bill_readings` cascade-delete
+    via their FKs.
 - Dashboards (`pages/dashboard_*.php`) join `bills` to `bill_metrics` with one `LEFT JOIN` per metric
   key (aliased `m1`, `m2`, ...) to pivot the EAV rows into columns, group bills by year in PHP, and
   render a Chart.js line chart (loaded from CDN in `index.php`) plus year-total summaries computed

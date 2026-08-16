@@ -99,6 +99,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   $consumo_mc = trim($_POST['consumo_mc'] ?? '');
   $mc_conguaglio = trim($_POST['mc_conguaglio'] ?? '0');
 
+  // storico letture ACQUA (data + m³, righe ripetibili)
+  $reading_dates  = $_POST['reading_date'] ?? [];
+  $reading_values = $_POST['reading_value'] ?? [];
+
   // metriche BONIFICA
   $data_scadenza  = trim($_POST['data_scadenza'] ?? '');
   $data_pagamento = trim($_POST['data_pagamento'] ?? '');
@@ -250,6 +254,10 @@ if ($utilityCode === 'acqua') {
   $m[] = ['mc_conguaglio', (float)$mc_conguaglio, 'm3'];
 }
 
+  if ($stima) {
+    $m[] = ['stima', 1, 'bool'];
+  }
+
 }
 
 /* BONIFICA */
@@ -275,6 +283,18 @@ if ($utilityCode === 'bonifica') {
       if ($m) {
         $ins = $pdo->prepare("INSERT INTO bill_metrics (bill_id, key, value, unit) VALUES (?,?,?,?)");
         foreach ($m as [$key,$val,$unit]) $ins->execute([$billId,$key,$val,$unit]);
+      }
+
+      /* Storico letture ACQUA */
+      if ($utilityCode === 'acqua') {
+        $insReading = $pdo->prepare("INSERT INTO bill_readings (bill_id, reading_date, reading_value) VALUES (?,?,?)");
+        foreach ($reading_dates as $i => $rDate) {
+          $rDate  = trim((string)$rDate);
+          $rValue = trim((string)($reading_values[$i] ?? ''));
+          if ($rDate !== '' && $rValue !== '' && is_numeric($rValue)) {
+            $insReading->execute([$billId, $rDate, (float)$rValue]);
+          }
+        }
       }
 
       $pdo->commit();
@@ -412,6 +432,32 @@ if ($utilityCode === 'bonifica') {
           Usa valori negativi se già fatturati
         </small>
       </div>
+      <div class="field">
+        <label style="display:flex; align-items:center; gap:6px;">
+          <input type="checkbox" name="stima" value="1">
+          📊 Bolletta stimata (previsione)
+        </label>
+      </div>
+
+      <div class="field wide">
+        <label>Storico letture (opzionale)</label>
+        <div id="readings-list">
+          <?php
+            $postDates  = $_POST['reading_date']  ?? [''];
+            $postValues = $_POST['reading_value'] ?? [''];
+          ?>
+          <?php foreach ($postDates as $i => $rDate): ?>
+            <div class="reading-row" style="display:flex; gap:8px; margin-bottom:6px;">
+              <input type="date" name="reading_date[]" value="<?= htmlspecialchars($rDate) ?>">
+              <input type="number" step="0.01" name="reading_value[]" placeholder="m³"
+                     value="<?= htmlspecialchars($postValues[$i] ?? '') ?>">
+              <button type="button" class="btn secondary remove-reading">✕</button>
+            </div>
+          <?php endforeach; ?>
+        </div>
+        <button type="button" class="btn secondary" id="add-reading">+ Aggiungi lettura</button>
+        <small class="muted">Letture intermedie del contatore durante il periodo, per capire l'andamento del consumo</small>
+      </div>
     <?php endif; ?>
 
     <?php if ($utilityCode === 'bonifica'): ?>
@@ -507,6 +553,38 @@ function calcolaConsumoAcqua() {
 if (mcStart && mcEnd) {
   mcStart.addEventListener('input', calcolaConsumoAcqua);
   mcEnd.addEventListener('input', calcolaConsumoAcqua);
+}
+
+
+/* ===========================
+   STORICO LETTURE ACQUA
+   =========================== */
+const readingsList = document.getElementById('readings-list');
+const addReadingBtn = document.getElementById('add-reading');
+
+function bindRemoveReading(row) {
+  const btn = row.querySelector('.remove-reading');
+  if (!btn) return;
+  btn.addEventListener('click', () => row.remove());
+}
+
+if (readingsList) {
+  readingsList.querySelectorAll('.reading-row').forEach(bindRemoveReading);
+}
+
+if (addReadingBtn && readingsList) {
+  addReadingBtn.addEventListener('click', () => {
+    const row = document.createElement('div');
+    row.className = 'reading-row';
+    row.style.cssText = 'display:flex; gap:8px; margin-bottom:6px;';
+    row.innerHTML = `
+      <input type="date" name="reading_date[]">
+      <input type="number" step="0.01" name="reading_value[]" placeholder="m³">
+      <button type="button" class="btn secondary remove-reading">✕</button>
+    `;
+    readingsList.appendChild(row);
+    bindRemoveReading(row);
+  });
 }
 
 

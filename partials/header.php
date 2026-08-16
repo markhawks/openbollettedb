@@ -3,7 +3,7 @@
     <div class="brand-title">
       <span class="logo-icon">🧾</span>
       <h1><span class="logo-open">Open</span><span class="logo-name">BolletteDB</span></h1>
-      <span class="version-badge">v1.3 &middot; 08/08/2026</span>
+      <span class="version-badge">v1.4 &middot; 16/08/2026</span>
       <a class="changelog-link" href="changelog.php" target="_blank" rel="noopener" title="Note di rilascio – cosa c'è di nuovo">📝</a>
     </div>
     <div class="sub">Gestione bollette domestiche</div>

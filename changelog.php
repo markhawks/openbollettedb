@@ -4,6 +4,15 @@ declare(strict_types=1);
 /* Storico versioni: aggiungere una nuova voce in cima ad ogni rilascio */
 $release = [
   [
+    'version' => 'v1.4',
+    'date'    => '16/08/2026',
+    'changes' => [
+      'Pagina Acqua: aggiunta la colonna "m³/giorno" in tabella, con il consumo medio giornaliero di ogni bolletta (consumo netto diviso i giorni del periodo), per confrontare a colpo d\'occhio quanto un trimestre sfora rispetto agli altri.',
+      'Pagina Acqua: aggiunta la colonna "Storico letture", a destra di "Letture". Da "Nuova bolletta" e "Modifica" si possono ora annotare a mano più letture intermedie del contatore (data + m³) durante il periodo, per seguire l\'andamento del consumo tra una bolletta e l\'altra.',
+      'Pagina Acqua: aggiunta l\'opzione "📊 Bolletta stimata (previsione)" (come già presente per Luce): badge in tabella, riga in corsivo, riepilogo annuale con spesa reale/stimata separata, e nel grafico "Consumo Acqua per Anno" il consumo stimato appare impilato con un colore diverso rispetto a quello reale.',
+    ],
+  ],
+  [
     'version' => 'v1.3',
     'date'    => '08/08/2026',
     'changes' => [

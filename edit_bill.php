@@ -24,6 +24,11 @@ $mStmt = $pdo->prepare("SELECT `key`, value FROM bill_metrics WHERE bill_id = ?"
 $mStmt->execute([$billId]);
 $metrics = $mStmt->fetchAll(PDO::FETCH_KEY_PAIR);
 
+/* 3) Carico storico letture (solo ACQUA) */
+$rStmt = $pdo->prepare("SELECT reading_date, reading_value FROM bill_readings WHERE bill_id = ? ORDER BY reading_date ASC");
+$rStmt->execute([$billId]);
+$existingReadings = $rStmt->fetchAll(PDO::FETCH_ASSOC);
+
 /* Helper: upsert semplice per metriche (DELETE + INSERT) */
 function saveMetric(PDO $pdo, int $billId, string $key, $value, string $unit): void {
   $pdo->prepare("DELETE FROM bill_metrics WHERE bill_id = ? AND `key` = ?")
@@ -69,6 +74,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   $mc_start   = trim($_POST['mc_start'] ?? '');
   $mc_end     = trim($_POST['mc_end'] ?? '');
   $consumo_mc = trim($_POST['consumo_mc'] ?? '');
+
+  // storico letture ACQUA (data + m³, righe ripetibili)
+  $reading_dates  = $_POST['reading_date'] ?? [];
+  $reading_values = $_POST['reading_value'] ?? [];
 
   // BONIFICA
   $data_scadenza  = trim($_POST['data_scadenza'] ?? '');
@@ -268,6 +277,22 @@ if ($utilityCode === 'bonifica') {
         saveMetric($pdo, $billId, 'mc_conguaglio', (float)$mc_conguaglio, 'm3');
       else
         saveMetric($pdo, $billId, 'mc_conguaglio', null, 'm3');
+
+      if ($stima)
+        saveMetric($pdo, $billId, 'stima', 1, 'bool');
+      else
+        saveMetric($pdo, $billId, 'stima', null, 'bool');
+
+      /* Storico letture: si cancellano e si reinseriscono da capo */
+      $pdo->prepare("DELETE FROM bill_readings WHERE bill_id = ?")->execute([$billId]);
+      $insReading = $pdo->prepare("INSERT INTO bill_readings (bill_id, reading_date, reading_value) VALUES (?,?,?)");
+      foreach ($reading_dates as $i => $rDate) {
+        $rDate  = trim((string)$rDate);
+        $rValue = trim((string)($reading_values[$i] ?? ''));
+        if ($rDate !== '' && $rValue !== '' && is_numeric($rValue)) {
+          $insReading->execute([$billId, $rDate, (float)$rValue]);
+        }
+      }
     }
 
     if ($utilityCode === 'bonifica') {
@@ -440,6 +465,36 @@ if ($existingTrimestre === '') {
                 <small class="muted">
                   Metri cubi già fatturati o stimati
                 </small>
+              </div>
+              <div class="field">
+                <label style="display:flex; align-items:center; gap:6px;">
+                  <input type="checkbox" name="stima" value="1" <?= !empty($metrics['stima']) ? 'checked' : '' ?>>
+                  📊 Bolletta stimata (previsione)
+                </label>
+              </div>
+
+              <div class="field wide">
+                <label>Storico letture (opzionale)</label>
+                <div id="readings-list">
+                  <?php if (!$existingReadings): ?>
+                    <div class="reading-row" style="display:flex; gap:8px; margin-bottom:6px;">
+                      <input type="date" name="reading_date[]">
+                      <input type="number" step="0.01" name="reading_value[]" placeholder="m³">
+                      <button type="button" class="btn secondary remove-reading">✕</button>
+                    </div>
+                  <?php else: ?>
+                    <?php foreach ($existingReadings as $r): ?>
+                      <div class="reading-row" style="display:flex; gap:8px; margin-bottom:6px;">
+                        <input type="date" name="reading_date[]" value="<?= htmlspecialchars($r['reading_date']) ?>">
+                        <input type="number" step="0.01" name="reading_value[]" placeholder="m³"
+                               value="<?= htmlspecialchars((string)$r['reading_value']) ?>">
+                        <button type="button" class="btn secondary remove-reading">✕</button>
+                      </div>
+                    <?php endforeach; ?>
+                  <?php endif; ?>
+                </div>
+                <button type="button" class="btn secondary" id="add-reading">+ Aggiungi lettura</button>
+                <small class="muted">Letture intermedie del contatore durante il periodo, per capire l'andamento del consumo</small>
               </div>
 
             <?php endif; ?>
@@ -626,6 +681,38 @@ if ($existingTrimestre === '') {
 
   a.addEventListener('input', calc);
   b.addEventListener('input', calc);
+})();
+</script>
+
+<script>
+(function(){
+  const readingsList = document.getElementById('readings-list');
+  const addReadingBtn = document.getElementById('add-reading');
+
+  function bindRemoveReading(row) {
+    const btn = row.querySelector('.remove-reading');
+    if (!btn) return;
+    btn.addEventListener('click', () => row.remove());
+  }
+
+  if (readingsList) {
+    readingsList.querySelectorAll('.reading-row').forEach(bindRemoveReading);
+  }
+
+  if (addReadingBtn && readingsList) {
+    addReadingBtn.addEventListener('click', () => {
+      const row = document.createElement('div');
+      row.className = 'reading-row';
+      row.style.cssText = 'display:flex; gap:8px; margin-bottom:6px;';
+      row.innerHTML = `
+        <input type="date" name="reading_date[]">
+        <input type="number" step="0.01" name="reading_value[]" placeholder="m³">
+        <button type="button" class="btn secondary remove-reading">✕</button>
+      `;
+      readingsList.appendChild(row);
+      bindRemoveReading(row);
+    });
+  }
 })();
 </script>
 
