@@ -4,6 +4,17 @@ declare(strict_types=1);
 /* Storico versioni: aggiungere una nuova voce in cima ad ogni rilascio */
 $release = [
   [
+    'version' => 'v1.5.1',
+    'date'    => '05/09/2026',
+    'changes' => [
+      'Dashboard Acqua: ripristinato il raggruppamento coerente per data di emissione/immissione in tabella, riepilogo annuale e grafico.',
+      'Uniformata la visualizzazione delle letture del contatore: gli zeri decimali non significativi vengono rimossi, conservando gli eventuali decimali reali.',
+      'Le date future del periodo per la prossima autolettura sono ora evidenziate in rosso e accompagnate da una campanella; le date trascorse restano neutre.',
+      'Rinnovata la dashboard Acqua: consumo rilevato o stimato, conguaglio e quantità addebitata sono separati per ogni bolletta e riepilogati per anno.',
+      'La nuova visualizzazione dei consumi Acqua, inizialmente proposta come anteprima Acqua 2.0, è diventata la dashboard ufficiale e ha sostituito la precedente.',
+    ],
+  ],
+  [
     'version' => 'v1.5',
     'date'    => '05/09/2026',
     'changes' => [

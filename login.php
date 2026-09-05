@@ -42,7 +42,7 @@ $csrfToken = csrf_token();
     <div class="login-brand">
       <span class="logo-icon">🧾</span>
       <h1><span class="logo-open">Open</span><span class="logo-name">BolletteDB</span></h1>
-      <span class="version-badge">v1.5 &middot; 05/09/2026</span>
+      <span class="version-badge">v1.5.1 &middot; 05/09/2026</span>
     </div>
     <div class="sub login-sub">Accedi per gestire le bollette domestiche</div>
 

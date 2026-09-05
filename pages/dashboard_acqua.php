@@ -23,7 +23,7 @@ $stmt = $pdo->prepare("
     b.period_start,
     b.period_end,
     b.issue_date,
-    strftime('%Y', b.period_start) AS year,
+    strftime('%Y', COALESCE(b.issue_date, b.period_start)) AS year,
     m1.value AS mc_start,
     m2.value AS mc_end,
     m3.value AS consumo_mc,
@@ -41,8 +41,8 @@ $stmt = $pdo->prepare("
   LEFT JOIN bill_metrics m7 ON b.id = m7.bill_id AND m7.key = 'next_reading_end'
   WHERE b.utility_id = ?
   ORDER BY 
-    strftime('%Y', b.period_start) DESC,
-    b.period_start DESC
+    strftime('%Y', COALESCE(b.issue_date, b.period_start)) DESC,
+    COALESCE(b.issue_date, b.period_start) DESC
 ");
 
 
@@ -74,7 +74,7 @@ foreach ($bills as $b) {
 /* Grafico: consumo per anno, diviso tra reale e stimato (colore diverso nella barra) */
 $stmtChart = $pdo->prepare("
   SELECT
-    strftime('%Y', b.period_start) AS year,
+    strftime('%Y', COALESCE(b.issue_date, b.period_start)) AS year,
     SUM(CASE WHEN EXISTS (
       SELECT 1 FROM bill_metrics sm WHERE sm.bill_id = b.id AND sm.key = 'stima' AND sm.value = 1
     ) THEN 0 ELSE
@@ -101,6 +101,14 @@ $years         = array_column($chartData, 'year');
 $consumiReali  = array_map(fn($v) => (float)$v, array_column($chartData, 'consumo_reale'));
 $consumiStima  = array_map(fn($v) => (float)$v, array_column($chartData, 'consumo_stima'));
 
+/* Letture del contatore uniformi: niente zeri decimali superflui, ma conserva
+   gli eventuali decimali significativi. */
+function formatAcquaReading(mixed $value): string
+{
+  $formatted = number_format((float)$value, 3, ',', '.');
+  return rtrim(rtrim($formatted, '0'), ',');
+}
+
 ?>
 
 
@@ -111,12 +119,17 @@ $consumiStima  = array_map(fn($v) => (float)$v, array_column($chartData, 'consum
   <header class="topbar">
     <div>
       <h1>💧 Acqua</h1>
-      <div class="sub">Gestione bollette acqua</div>
+      <div class="sub">Consumi rilevati, stimati e conguagli separati</div>
     </div>
     <?php if (is_admin()): ?>
     <a class="btn" href="new_bill.php?u=acqua">+ Nuova Bolletta</a>
     <?php endif; ?>
   </header>
+
+  <section class="card acqua-consumption-info">
+    <strong>💧 Come leggere i consumi</strong>
+    <span>La voce <b>Rilevato</b> indica il consumo riportato nella bolletta; <b>Conguaglio</b> storna o recupera consumi già fatturati; <b>Addebitato</b> è la loro somma. La classificazione dipende dall'opzione “Bolletta stimata” presente in modifica.</span>
+  </section>
 
   <?php if (!$billsByYear): ?>
 <section class="card muted" style="text-align:center;">
@@ -144,16 +157,22 @@ $consumiStima  = array_map(fn($v) => (float)$v, array_column($chartData, 'consum
       $totSpesa      = 0.0;
       $totSpesaStima = 0.0;
       $totSpesaReale = 0.0;
+      $totConsumoReale = 0.0;
+      $totConsumoStima = 0.0;
+      $totConguagli = 0.0;
 
       foreach ($items as $b) {
         $consumoLordo = (float)$b['consumo_mc'];
         $conguaglio   = (float)($b['mc_conguaglio'] ?? 0);
         $consumoNetto = $consumoLordo + $conguaglio;
         $totConsumo += $consumoNetto;
+        $totConguagli += $conguaglio;
         $totSpesa   += (float)$b['amount_total'];
         if (!empty($b['stima'])) {
+          $totConsumoStima += $consumoLordo;
           $totSpesaStima += (float)$b['amount_total'];
         } else {
+          $totConsumoReale += $consumoLordo;
           $totSpesaReale += (float)$b['amount_total'];
         }
       }
@@ -166,10 +185,11 @@ $consumiStima  = array_map(fn($v) => (float)$v, array_column($chartData, 'consum
           <strong>€ <?= number_format($totSpesa, 2, ',', '.') ?></strong>
         </div>
 
-        <div class="muted">
-          Consumo: <?= number_format($totConsumo, 1, ',', '.') ?> m³ |
-          Costo medio: € <?= number_format($costoMedio, 2, ',', '.') ?>/m³ |
-          Bollette: <?= count($items) ?>
+        <div class="consumption-summary-grid">
+          <span class="consumption-real">📍 Rilevato: <strong><?= formatAcquaReading($totConsumoReale) ?> m³</strong></span>
+          <span class="consumption-estimated">📊 Stimato: <strong><?= formatAcquaReading($totConsumoStima) ?> m³</strong></span>
+          <span class="consumption-adjustment">↩ Conguagli: <strong><?= formatAcquaReading($totConguagli) ?> m³</strong></span>
+          <span>Addebitato: <strong><?= formatAcquaReading($totConsumo) ?> m³</strong></span>
         </div>
 
         <?php if ($totSpesaStima > 0): ?>
@@ -209,8 +229,7 @@ $consumiStima  = array_map(fn($v) => (float)$v, array_column($chartData, 'consum
     <th>Letture</th>
     <th>Prossima lettura</th>
     <th>Storico letture</th>
-    <th class="right">Conguaglio m³</th>
-    <th class="right">Consumo m³</th>
+    <th>Dettaglio consumo</th>
     <th class="right">m³/giorno</th>
     <th class="right">€/m³</th>
     <th class="right">Importo €</th>
@@ -234,8 +253,8 @@ $consumiStima  = array_map(fn($v) => (float)$v, array_column($chartData, 'consum
   // Il periodo indicato in bolletta include sia il giorno iniziale sia quello finale.
   $giorniPeriodo = (int)(new DateTimeImmutable($b['period_start']))
     ->diff(new DateTimeImmutable($b['period_end']))->days + 1;
-  $consumoGiornaliero = $giorniPeriodo > 0 ? $consumoNetto / $giorniPeriodo : null;
   $isStima = !empty($b['stima']);
+  $consumoGiornaliero = $giorniPeriodo > 0 ? $consumoLordo / $giorniPeriodo : null;
 ?>
 <tr<?= $isStima ? ' style="opacity:0.7; font-style:italic;"' : '' ?>>
 
@@ -262,15 +281,27 @@ $consumiStima  = array_map(fn($v) => (float)$v, array_column($chartData, 'consum
   <!-- LETTURE -->
   <td class="muted">
   <?= ($b['mc_start'] !== null && $b['mc_end'] !== null)
-      ? $b['mc_start'].' → '.$b['mc_end']
+      ? formatAcquaReading($b['mc_start']).' → '.formatAcquaReading($b['mc_end'])
       : '-' ?>
   </td>
 
   <!-- PERIODO UTILE PER LA PROSSIMA LETTURA -->
   <td class="muted">
     <?php if (!empty($b['next_reading_start']) && !empty($b['next_reading_end'])): ?>
-      <?= date('d/m/Y', strtotime($b['next_reading_start'])) ?> —<br>
-      <?= date('d/m/Y', strtotime($b['next_reading_end'])) ?>
+      <?php
+        $today = date('Y-m-d');
+        $startIsFuture = $b['next_reading_start'] >= $today;
+        $endIsFuture = $b['next_reading_end'] >= $today;
+      ?>
+      <?php if ($startIsFuture || $endIsFuture): ?>
+        <span class="next-reading-reminder" title="Periodo futuro: ricordati di comunicare la lettura">🔔</span>
+      <?php endif; ?>
+      <span<?= $startIsFuture ? ' class="next-reading-future"' : '' ?>>
+        <?= date('d/m/Y', strtotime($b['next_reading_start'])) ?>
+      </span> —<br>
+      <span<?= $endIsFuture ? ' class="next-reading-future"' : '' ?>>
+        <?= date('d/m/Y', strtotime($b['next_reading_end'])) ?>
+      </span>
     <?php else: ?>
       -
     <?php endif; ?>
@@ -282,27 +313,24 @@ $consumiStima  = array_map(fn($v) => (float)$v, array_column($chartData, 'consum
     <?php if ($readings): ?>
       <?php foreach ($readings as $r): ?>
         <?= date('d/m/Y', strtotime($r['reading_date'])) ?>:
-        <?= number_format((float)$r['reading_value'], 2, ',', '.') ?> m³<br>
+        <?= formatAcquaReading($r['reading_value']) ?> m³<br>
       <?php endforeach; ?>
     <?php else: ?>
       -
     <?php endif; ?>
   </td>
 
-  <!-- CONGUAGLIO -->
-  <td class="right">
-    <?php if ($conguaglio != 0): ?>
-      <strong style="color:<?= $conguaglio < 0 ? '#b45309' : '#065f46' ?>">
-        <?= number_format($conguaglio,1,',','.') ?>
-      </strong>
+  <!-- DETTAGLIO: rilevato/stimato, conguaglio e addebitato -->
+  <td class="consumption-detail">
+    <?php if ($isStima): ?>
+      <div class="consumption-line consumption-estimated"><span>📊 Stimato</span><strong><?= formatAcquaReading($consumoLordo) ?> m³</strong></div>
     <?php else: ?>
-      <span class="muted">0,0</span>
+      <div class="consumption-line consumption-real"><span>📍 Rilevato</span><strong><?= formatAcquaReading($consumoLordo) ?> m³</strong></div>
     <?php endif; ?>
-  </td>
-
-  <!-- CONSUMO NETTO -->
-  <td class="right">
-    <strong><?= number_format($consumoNetto,1,',','.') ?></strong>
+    <?php if ($conguaglio != 0): ?>
+      <div class="consumption-line consumption-adjustment"><span>↩ Conguaglio</span><strong><?= formatAcquaReading($conguaglio) ?> m³</strong></div>
+    <?php endif; ?>
+    <div class="consumption-line consumption-charged"><span>Addebitato</span><strong><?= formatAcquaReading($consumoNetto) ?> m³</strong></div>
   </td>
 
   <!-- CONSUMO MEDIO GIORNALIERO -->

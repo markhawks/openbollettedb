@@ -91,6 +91,59 @@ h1 { margin: 0; font-size: 24px; }
   white-space: nowrap;
 }
 
+.next-reading-future {
+  color: #dc2626;
+  font-weight: 700;
+}
+
+.next-reading-reminder {
+  display: inline-block;
+  margin-right: 4px;
+  color: #dc2626;
+  font-style: normal;
+}
+
+.consumption-detail {
+  min-width: 175px;
+  line-height: 1.65;
+}
+
+.consumption-line {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  white-space: nowrap;
+}
+
+.consumption-real { color: #15803d; }
+.consumption-estimated { color: #c2410c; }
+.consumption-adjustment { color: #2563eb; }
+.consumption-charged {
+  margin-top: 3px;
+  padding-top: 3px;
+  border-top: 1px solid #e5e7eb;
+  color: #1f2937;
+  font-weight: 700;
+}
+
+.consumption-summary-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 18px;
+  color: #475569;
+  font-size: .86rem;
+}
+
+.acqua-consumption-info {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  border-left: 4px solid #7c3aed;
+  background: #faf5ff;
+  color: #5b21b6;
+  font-size: .9rem;
+}
+
 .changelog-link {
   font-size: 16px;
   line-height: 1;
