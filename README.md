@@ -1,12 +1,36 @@
 # OpenBolletteDB
 
+**Italiano** | [English](README.en.md)
+
 ![PHP](https://img.shields.io/badge/PHP-8.x-777BB4?logo=php&logoColor=white)
 ![Database](https://img.shields.io/badge/DB-SQLite-003B57?logo=sqlite&logoColor=white)
 ![Tested on](https://img.shields.io/badge/tested%20on-Fedora%2044-294172?logo=fedora&logoColor=white)
-![License](https://img.shields.io/badge/license-All%20Rights%20Reserved-red)
+[![License: AGPL v3+](https://img.shields.io/badge/license-AGPL--3.0--or--later-blue)](LICENSE)
 
-Applicazione PHP minimale, senza framework né dipendenze esterne, per tenere traccia delle bollette
+Applicazione PHP minimale, senza framework né gestori di pacchetti, per tenere traccia delle bollette
 domestiche (Luce, Gas, Acqua, TARI, Bonifica) in un database SQLite locale.
+
+## Funzionalità
+
+- Dashboard separate per **Luce**, **Gas**, **Luce + Gas**, **Acqua**, **TARI** e **Bonifica**.
+- Inserimento, modifica ed eliminazione delle bollette, con raggruppamento annuale e possibilità di
+  registrare anche dati precedenti al 2021.
+- Grafici dei consumi e dei costi, riepiloghi annuali, confronto con l'anno precedente e medie mensili
+  calcolate sui mesi effettivamente presenti.
+- Gestione di importi extra, bonus e conguagli; supporto alle bollette stimate per Luce e Acqua.
+- Dashboard **Acqua** con letture iniziale/finale, storico delle autoletture, consumo medio giornaliero,
+  costo al m³ e distinzione fra consumo rilevato o stimato, conguaglio e quantità addebitata.
+- Periodo per la prossima autolettura Acqua mostrato in tabella, con campanella e date future
+  evidenziate automaticamente in rosso.
+- Dashboard **Luce + Gas** con tutti gli anni disponibili visibili nel grafico, compresi quelli che
+  contengono dati di una sola delle due utenze.
+- Gestione **TARI** con tipo e numero dell'avviso, periodo di competenza e raccolta differenziata.
+- Gestione degli avvisi del **Consorzio di bonifica**, incluse scadenza, pagamento e segnalazione dei
+  ritardi.
+- Account multipli con ruoli **Amministratore** e **Sola lettura**, modifica del profilo e revoca
+  automatica delle sessioni dopo variazioni sensibili dell'account.
+- Interfaccia responsiva, pagina di login con versione visibile e note di rilascio integrate.
+- Dati dimostrativi opzionali e strumenti per svuotare in sicurezza una singola utenza/anno.
 
 ## Screenshot
 
@@ -128,6 +152,7 @@ e ripartire con i propri dati reali.
 - `app/migrate.php` — schema del database (incluso l'utente predefinito) e seed delle utenze
 - `app/seed_demo.php` — genera bollette di esempio per la prima installazione (dati inventati)
 - `app/csrf.php` — token di sessione usato per proteggere tutte le operazioni di scrittura
+- `app/validation.php` — validazione centralizzata di date, intervalli, importi e campi delle utenze
 - `changelog.php` — note di rilascio, raggiungibile dall'icona 📝 nell'header
 
 Per i dettagli architetturali (modello dati, convenzioni, quirk noti) vedi `CLAUDE.md`.
@@ -189,14 +214,12 @@ Internet senza ulteriori accorgimenti (HTTPS, ecc.).
 Lo storico delle modifiche è consultabile nell'app stessa tramite l'icona 📝 accanto al nome, oppure
 direttamente in `changelog.php`.
 
-## Roadmap e limiti noti
+## Limiti noti
 
-- **Autenticazione multi-utente con ruoli**: dalla v1.3 più utenti possono avere ciascuno le proprie
-  credenziali (vedi [Sicurezza](#sicurezza)), con ruolo Amministratore o Sola lettura, ma tutti
-  condividono le stesse bollette: non c'è isolamento dei dati per utente.
-- **Pensata per un singolo nucleo familiare/utenza**: il selettore "Utenza" nella schermata di login è
-  già presente in previsione di una futura multi-utenza (più abitazioni, ciascuna con le proprie
-  bollette separate), ma al momento non è funzionante (mostra solo "Default").
+- **Una sola abitazione**: gli account hanno credenziali e ruoli distinti, ma condividono tutte le
+  bollette. Il selettore "Utenza" nel login è ancora un segnaposto e mostra soltanto "Default".
+- **Consumi Acqua rilevati/stimati**: la classificazione dipende dal flag salvato nella bolletta. Un
+  consumo trimestrale fisico esatto richiede due letture reali consecutive del contatore.
 - **Nessuna suite di test automatizzati**: le verifiche vengono fatte manualmente prima di ogni
   rilascio (vedi `changelog.php`).
 - **Compatibilità**: testato solo su Fedora 44; su altre distribuzioni potrebbero servire aggiustamenti
@@ -204,5 +227,10 @@ direttamente in `changelog.php`.
 
 ## Licenza
 
-Copyright riservato — vedi [`LICENSE`](LICENSE). Il codice è pubblico a scopo di consultazione, non è
-concesso il riutilizzo senza autorizzazione.
+Copyright (c) 2026 maccu (onlymaccu@gmail.com).
+
+OpenBolletteDB è software libero e open source distribuito secondo i termini della
+**GNU Affero General Public License, versione 3 o successiva** (`AGPL-3.0-or-later`). Puoi usare,
+studiare, copiare e modificare il programma. Se distribuisci una versione modificata, oppure la
+rendi disponibile agli utenti attraverso una rete, devi rendere disponibile anche il relativo
+codice sorgente sotto la stessa licenza. Consulta il testo completo in [`LICENSE`](LICENSE).

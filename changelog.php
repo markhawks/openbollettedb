@@ -12,6 +12,8 @@ $release = [
       'Le date future del periodo per la prossima autolettura sono ora evidenziate in rosso e accompagnate da una campanella; le date trascorse restano neutre.',
       'Rinnovata la dashboard Acqua: consumo rilevato o stimato, conguaglio e quantità addebitata sono separati per ogni bolletta e riepilogati per anno.',
       'La nuova visualizzazione dei consumi Acqua, inizialmente proposta come anteprima Acqua 2.0, è diventata la dashboard ufficiale e ha sostituito la precedente.',
+      'OpenBolletteDB è ora software libero e open source sotto licenza GNU AGPL v3 o successiva, con obbligo di mantenere disponibile il sorgente anche per le versioni modificate offerte tramite rete.',
+      'Documentazione completamente aggiornata e disponibile in italiano e inglese, con panoramica delle funzioni, installazione, sicurezza, backup, limiti noti e licenza.',
     ],
   ],
   [
