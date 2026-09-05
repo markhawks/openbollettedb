@@ -1,6 +1,9 @@
 <?php
 declare(strict_types=1);
-require __DIR__ . '/../app/db.php';
+require_once __DIR__ . '/../app/auth.php';
+require_login();
+require_once __DIR__ . '/../app/csrf.php';
+$csrfToken = csrf_token();
 
 $pdo = db();
 
@@ -20,22 +23,26 @@ $stmt = $pdo->prepare("
     b.period_start,
     b.period_end,
     b.issue_date,
-    strftime('%Y', COALESCE(b.issue_date, b.period_start)) AS year,
+    strftime('%Y', b.period_start) AS year,
     m1.value AS mc_start,
     m2.value AS mc_end,
     m3.value AS consumo_mc,
     m4.value AS mc_conguaglio,
-    m5.value AS stima
+    m5.value AS stima,
+    m6.value AS next_reading_start,
+    m7.value AS next_reading_end
   FROM bills b
   LEFT JOIN bill_metrics m1 ON b.id = m1.bill_id AND m1.key = 'mc_start'
   LEFT JOIN bill_metrics m2 ON b.id = m2.bill_id AND m2.key = 'mc_end'
   LEFT JOIN bill_metrics m3 ON b.id = m3.bill_id AND m3.key = 'consumo_mc'
   LEFT JOIN bill_metrics m4 ON b.id = m4.bill_id AND m4.key = 'mc_conguaglio'
   LEFT JOIN bill_metrics m5 ON b.id = m5.bill_id AND m5.key = 'stima'
+  LEFT JOIN bill_metrics m6 ON b.id = m6.bill_id AND m6.key = 'next_reading_start'
+  LEFT JOIN bill_metrics m7 ON b.id = m7.bill_id AND m7.key = 'next_reading_end'
   WHERE b.utility_id = ?
   ORDER BY 
-    strftime('%Y', COALESCE(b.issue_date, b.period_start)) DESC,
-    COALESCE(b.issue_date, b.period_start) DESC
+    strftime('%Y', b.period_start) DESC,
+    b.period_start DESC
 ");
 
 
@@ -67,7 +74,7 @@ foreach ($bills as $b) {
 /* Grafico: consumo per anno, diviso tra reale e stimato (colore diverso nella barra) */
 $stmtChart = $pdo->prepare("
   SELECT
-    strftime('%Y', COALESCE(b.issue_date, b.period_start)) AS year,
+    strftime('%Y', b.period_start) AS year,
     SUM(CASE WHEN EXISTS (
       SELECT 1 FROM bill_metrics sm WHERE sm.bill_id = b.id AND sm.key = 'stima' AND sm.value = 1
     ) THEN 0 ELSE
@@ -184,12 +191,12 @@ $consumiStima  = array_map(fn($v) => (float)$v, array_column($chartData, 'consum
   <div class="card-year-header">
     <h2>Bollette Acqua – <?= $year ?></h2>
     <?php if (is_admin()): ?>
-    <a class="btn-reset-year"
-       href="reset_year.php?u=acqua&year=<?= $year ?>&csrf=<?= urlencode($csrfToken) ?>"
-       onclick="return confirmResetAnno('Acqua', <?= $year ?>);"
-       title="Elimina tutte le bollette Acqua di questo anno">
-      🗑️ Svuota anno
-    </a>
+    <form method="post" action="reset_year.php" class="inline-action-form" onsubmit="return confirmResetAnno('Acqua', <?= $year ?>);">
+      <input type="hidden" name="csrf" value="<?= htmlspecialchars($csrfToken) ?>">
+      <input type="hidden" name="u" value="acqua">
+      <input type="hidden" name="year" value="<?= $year ?>">
+      <button class="btn-reset-year" type="submit" title="Elimina tutte le bollette Acqua di questo anno">🗑️ Svuota anno</button>
+    </form>
     <?php endif; ?>
   </div>
 
@@ -200,6 +207,7 @@ $consumiStima  = array_map(fn($v) => (float)$v, array_column($chartData, 'consum
     <th>Data immissione</th>
     <th>Periodo</th>
     <th>Letture</th>
+    <th>Prossima lettura</th>
     <th>Storico letture</th>
     <th class="right">Conguaglio m³</th>
     <th class="right">Consumo m³</th>
@@ -223,9 +231,9 @@ $consumiStima  = array_map(fn($v) => (float)$v, array_column($chartData, 'consum
     ? $b['amount_total'] / $consumoNetto
     : null;
 
-  $giorniPeriodo = (int)round(
-    (strtotime($b['period_end']) - strtotime($b['period_start'])) / 86400
-  );
+  // Il periodo indicato in bolletta include sia il giorno iniziale sia quello finale.
+  $giorniPeriodo = (int)(new DateTimeImmutable($b['period_start']))
+    ->diff(new DateTimeImmutable($b['period_end']))->days + 1;
   $consumoGiornaliero = $giorniPeriodo > 0 ? $consumoNetto / $giorniPeriodo : null;
   $isStima = !empty($b['stima']);
 ?>
@@ -256,6 +264,16 @@ $consumiStima  = array_map(fn($v) => (float)$v, array_column($chartData, 'consum
   <?= ($b['mc_start'] !== null && $b['mc_end'] !== null)
       ? $b['mc_start'].' → '.$b['mc_end']
       : '-' ?>
+  </td>
+
+  <!-- PERIODO UTILE PER LA PROSSIMA LETTURA -->
+  <td class="muted">
+    <?php if (!empty($b['next_reading_start']) && !empty($b['next_reading_end'])): ?>
+      <?= date('d/m/Y', strtotime($b['next_reading_start'])) ?> —<br>
+      <?= date('d/m/Y', strtotime($b['next_reading_end'])) ?>
+    <?php else: ?>
+      -
+    <?php endif; ?>
   </td>
 
   <!-- STORICO LETTURE -->
@@ -311,8 +329,11 @@ $consumiStima  = array_map(fn($v) => (float)$v, array_column($chartData, 'consum
   <td style="text-align:center;">
     <?php if (is_admin()): ?>
     <a href="edit_bill.php?id=<?= $b['id'] ?>&u=acqua">✏️</a>
-    <a href="delete_bill.php?id=<?= $b['id'] ?>&u=acqua&csrf=<?= urlencode($csrfToken) ?>"
-       onclick="return confirm('Eliminare questa bolletta acqua?');">🗑️</a>
+    <form method="post" action="delete_bill.php" class="inline-action-form" onsubmit="return confirm('Eliminare questa bolletta acqua?');">
+      <input type="hidden" name="csrf" value="<?= htmlspecialchars($csrfToken) ?>">
+      <input type="hidden" name="id" value="<?= (int)$b['id'] ?>">
+      <button type="submit" class="icon-action" title="Elimina">🗑️</button>
+    </form>
     <?php else: ?>
     <span class="muted">—</span>
     <?php endif; ?>

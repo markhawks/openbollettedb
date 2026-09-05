@@ -51,7 +51,8 @@ cd OpenBolletteDB
 # 5. Permessi: php-fpm su Fedora gira come utente/gruppo "apache" e deve poter scrivere
 #    nella cartella data/ (il database SQLite e i file -wal/-shm di WAL mode)
 sudo chgrp apache data
-sudo chmod g+w data
+sudo chmod 770 data
+sudo find data -maxdepth 1 -type f -name '*.sqlite*' -exec chmod 660 {} +
 
 # 6. Schema del database (+ opzionale: dati di esempio)
 php app/migrate.php
@@ -84,6 +85,10 @@ davvero l'accesso diretto al database e la navigazione delle cartelle, crea inve
 </Directory>
 
 <Directory "/var/www/html/OpenBolletteDB/data">
+    Require all denied
+</Directory>
+
+<Directory "/var/www/html/OpenBolletteDB/app">
     Require all denied
 </Directory>
 ```
@@ -122,7 +127,7 @@ e ripartire con i propri dati reali.
 - `app/db.php` — connessione PDO/SQLite condivisa
 - `app/migrate.php` — schema del database (incluso l'utente predefinito) e seed delle utenze
 - `app/seed_demo.php` — genera bollette di esempio per la prima installazione (dati inventati)
-- `app/csrf.php` — token di sessione usato per proteggere le azioni distruttive (elimina/svuota anno)
+- `app/csrf.php` — token di sessione usato per proteggere tutte le operazioni di scrittura
 - `changelog.php` — note di rilascio, raggiungibile dall'icona 📝 nell'header
 
 Per i dettagli architetturali (modello dati, convenzioni, quirk noti) vedi `CLAUDE.md`.
@@ -146,7 +151,13 @@ per una conservazione più sicura.
 
 ## Sicurezza
 
-Pensata per uso **locale/LAN**. Dalla v1.2 è presente una pagina di login (`login.php`) con un
+Pensata per uso **locale/LAN**. In produzione è consigliato servirla tramite HTTPS: il cookie di
+sessione viene marcato `Secure` automaticamente quando PHP rileva una connessione HTTPS. Le sessioni
+scadono dopo 30 minuti di inattività e vengono revocate dopo cambio password, reset, eliminazione o
+variazione del ruolo. Dopo cinque accessi falliti, la coppia utente/indirizzo IP viene bloccata per
+15 minuti.
+
+Dalla v1.2 è presente una pagina di login (`login.php`) con un
 utente predefinito:
 
 - utente: `admin`

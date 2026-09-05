@@ -33,12 +33,15 @@ of `index.php` reuses. Keep that variable name/scope if you touch either file.
   short string used everywhere as `?u=` in URLs and in `WHERE code = ?` lookups.
 - `bills`: one row per bill/invoice — `utility_id`, `period_start`/`period_end`/`issue_date` (all
   `YYYY-MM-DD` text), `amount_total` (REAL), `notes`. FK `utility_id → utilities(id) ON DELETE RESTRICT`.
-- `bill_metrics`: EAV-style key/value rows attached to a bill (`bill_id`, `key`, `value` REAL, `unit`).
+- `bill_metrics`: EAV-style key/value rows attached to a bill (`bill_id`, `key`, `value` TEXT, `unit`).
+  TEXT is intentional because the same column stores both numeric measurements and identifiers/dates;
+  SQLite coerces numeric strings for `SUM()` and PHP casts them to float where needed.
   FK `bill_id → bills(id) ON DELETE CASCADE` — deleting a bill auto-deletes its metrics.
   Metric keys are per-utility conventions, not enforced by schema:
   - `luce`: `kwh`, `energy_price` (EUR/kWh), `commercial_fee` (EUR/mese), `canone_rai` (EUR)
   - `gas`: `smc`, `lettura_ini`, `lettura_fin`
-  - `acqua`: `mc_start`, `mc_end`, `consumo_mc`, `mc_conguaglio`
+  - `acqua`: `mc_start`, `mc_end`, `consumo_mc`, `mc_conguaglio`, `next_reading_start`,
+    `next_reading_end` (periodo utile indicato in bolletta per la prossima autolettura)
   - `tari`: `data_fattura`, `periodo_competenza` (e.g. `"Q1 2023"`), `numero_fattura`, `tipo_avviso`,
     `raccolta_diff`
   - shared: `extra_adjust` (EUR, can be negative for a bonus/credit)
@@ -68,16 +71,15 @@ declaration) — PHP early-binds a function that's unconditionally reachable in 
 preceding runtime `return`, so only nesting it inside the `if` defers binding to runtime.
 
 **Auth**: `app/auth.php` (`require_login()`, `require_admin()`, `is_admin()`, `attempt_login()`,
-`logout_user()`, `current_user()`) guards every entry point via PHP sessions. `attempt_login()` copies
-`role` into `$_SESSION['user']['role']` at login time; `is_admin()` just checks that cached value, it
-does not re-query the DB. `require_login()` — call as the very first statement (before any output) in
+`logout_user()`, `current_user()`) guards every entry point via PHP sessions. `current_user()` verifies
+the account and its `session_version` against the database, so role changes, password resets and
+deletions revoke existing sessions. Sessions expire after 30 minutes of inactivity; failed logins are
+limited per username/IP. `require_login()` — call as the very first statement (before any output) in
 any new top-level script that only *reads* bill data. `require_admin()` (which calls `require_login()`
 internally, then 403s with `die()` if `role !== 'admin'`) guards the four write entry points
 (`new_bill.php`, `edit_bill.php`, `delete_bill.php`, `reset_year.php`) — use it instead of
 `require_login()` for any new script that inserts/updates/deletes bills. `login.php`/`logout.php` are
-the only unguarded routes. Because the role lives in the session, a role change made by an admin via
-`account.php` only takes effect for the affected user on their *next* login — their current session
-keeps the old role until they re-authenticate.
+the only unguarded route. Every state-changing action uses POST and a CSRF token.
 
 **Roles & `account.php`**: `users.role` is `'admin'` (read/write) or `'user'` (read-only); every user
 sees the same bills, `role` only gates write access. `account.php` (linked from the "⚙️ Utente" item in
@@ -104,7 +106,7 @@ action.
   - `edit_bill.php` mirrors this: loads the existing bill + metrics, deletes all existing
     `bill_metrics` for that bill on submit, and re-inserts the relevant ones for that utility (same
     per-utility gating as `new_bill.php` — keep the two in sync when changing metric fields).
-  - `delete_bill.php?id=&u=` deletes the `bills` row; `bill_metrics` and `bill_readings` cascade-delete
+  - `delete_bill.php` accepts a CSRF-protected POST containing `id`; `bill_metrics` and `bill_readings` cascade-delete
     via their FKs.
 - Dashboards (`pages/dashboard_*.php`) join `bills` to `bill_metrics` with one `LEFT JOIN` per metric
   key (aliased `m1`, `m2`, ...) to pivot the EAV rows into columns, group bills by year in PHP, and

@@ -4,6 +4,26 @@ declare(strict_types=1);
 /* Storico versioni: aggiungere una nuova voce in cima ad ogni rilascio */
 $release = [
   [
+    'version' => 'v1.5',
+    'date'    => '05/09/2026',
+    'changes' => [
+      'Sicurezza: tutte le dashboard e le pagine operative verificano ora l\'autenticazione anche quando vengono richiamate direttamente; le operazioni di creazione, modifica, eliminazione, svuotamento anno e logout accettano esclusivamente richieste POST protette da token CSRF.',
+      'Sicurezza delle sessioni rafforzata: cookie HttpOnly, SameSite e Secure su HTTPS, rigenerazione dell\'identificativo, scadenza dopo 30 minuti di inattività e revoca immediata delle sessioni dopo cambio password, reset, eliminazione dell\'utente o modifica del ruolo.',
+      'Aggiunta la limitazione dei tentativi di accesso: dopo cinque credenziali errate la coppia utente/indirizzo IP viene bloccata temporaneamente per 15 minuti.',
+      'Protetti i componenti interni e il database dall\'accesso via web; migrazioni e generazione dei dati dimostrativi sono ora eseguibili soltanto da riga di comando. Aggiornate anche le istruzioni sui permessi sicuri della cartella dati e dei file SQLite.',
+      'Centralizzata e rafforzata la validazione dei dati delle bollette: controllo di date, intervalli, importi, valori numerici, lunghezze e campi specifici per utenza; i messaggi di errore non espongono più dettagli interni del database.',
+      'Il database impedisce metriche duplicate e bollette duplicate. La colonna dei valori delle metriche è stata migrata da REAL a TEXT per conservare correttamente date, codici e identificativi con zeri iniziali senza alterare i calcoli numerici.',
+      'Rimossi i limiti temporali fissi: è possibile inserire bollette precedenti al 2021 e i selettori degli anni si adattano ai dati disponibili.',
+      'Dashboard Luce + Gas: vengono inclusi anche gli anni contenenti soltanto bollette Gas e, al caricamento del grafico, sono sempre visibili tutti gli anni disponibili.',
+      'Corrette le medie mensili di Luce e Gas: vengono calcolate sui mesi realmente presenti anziché dividere sempre il totale annuale per dodici.',
+      'Dashboard Acqua: le bollette sono attribuite all\'anno del periodo di consumo, il numero di giorni comprende entrambe le date estreme e il consumo medio giornaliero non perde più un giorno.',
+      'Bolletta Acqua: ripristinati e resi chiaramente visibili i campi numerici delle letture in metri cubi nella pagina di modifica.',
+      'Bolletta Acqua: aggiunto il periodo indicato in bolletta per effettuare la prossima lettura, modificabile nei moduli di inserimento e modifica e mostrato in una nuova colonna della dashboard.',
+      'Aggiornato Chart.js a una versione fissata e verificata tramite controllo di integrità, evitando dipendenze caricate da URL senza versione.',
+      'Schermata di login aggiornata con numero e data della versione; il riquadro è ora più ampio e responsivo, con margini laterali garantiti e spazio sufficiente per futuri ampliamenti del testo.',
+    ],
+  ],
+  [
     'version' => 'v1.4',
     'date'    => '16/08/2026',
     'changes' => [

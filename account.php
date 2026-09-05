@@ -55,8 +55,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } elseif ($new !== $confirm) {
             $errorPassword = 'La nuova password e la conferma non coincidono.';
         } else {
-            $stmt = $pdo->prepare('UPDATE users SET password_hash = ? WHERE id = ?');
+            $stmt = $pdo->prepare('UPDATE users SET password_hash = ?, session_version = session_version + 1 WHERE id = ?');
             $stmt->execute([password_hash($new, PASSWORD_DEFAULT), $user['id']]);
+            $_SESSION['user']['session_version'] = (int)($_SESSION['user']['session_version'] ?? 1) + 1;
+            session_regenerate_id(true);
             $successPassword = 'Password aggiornata.';
         }
     }
@@ -113,7 +115,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     if (!in_array($newRole, $validRoles, true)) {
                         $errorUsers = 'Ruolo non valido.';
                     } else {
-                        $stmt = $pdo->prepare('UPDATE users SET role = ? WHERE id = ?');
+                        $stmt = $pdo->prepare('UPDATE users SET role = ?, session_version = session_version + 1 WHERE id = ?');
                         $stmt->execute([$newRole, $targetId]);
                         $successUsers = 'Ruolo di "' . $target['username'] . '" aggiornato.';
                     }
@@ -122,7 +124,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     if (strlen($newPassword) < 8) {
                         $errorUsers = 'La nuova password deve avere almeno 8 caratteri.';
                     } else {
-                        $stmt = $pdo->prepare('UPDATE users SET password_hash = ? WHERE id = ?');
+                        $stmt = $pdo->prepare('UPDATE users SET password_hash = ?, session_version = session_version + 1 WHERE id = ?');
                         $stmt->execute([password_hash($newPassword, PASSWORD_DEFAULT), $targetId]);
                         $successUsers = 'Password di "' . $target['username'] . '" reimpostata.';
                     }
@@ -265,7 +267,7 @@ $csrfToken = csrf_token();
                     <button type="submit" class="btn secondary" title="Reimposta password">🔑</button>
                   </form>
                   <form method="post" class="account-inline-form"
-                        onsubmit="return confirm('Eliminare l\'utente &quot;<?= htmlspecialchars($u['username'], ENT_QUOTES) ?>&quot;? Non potrà più accedere.');">
+                        onsubmit="return confirm('Eliminare questo utente? Non potrà più accedere.');">
                     <input type="hidden" name="csrf" value="<?= htmlspecialchars($csrfToken) ?>">
                     <input type="hidden" name="action" value="delete_user">
                     <input type="hidden" name="user_id" value="<?= (int)$u['id'] ?>">

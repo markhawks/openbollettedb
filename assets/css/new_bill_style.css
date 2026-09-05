@@ -66,6 +66,48 @@ h1 {
   }
 }
 
+/* Storico letture acqua: data, valore e pulsante devono restare visibili
+   nella stessa riga anche dentro un campo del form flessibile. */
+.form-inline .field.wide {
+  flex-basis: 100%;
+}
+
+#readings-list {
+  width: 100%;
+}
+
+.form-inline .reading-row {
+  align-items: center;
+  width: 100%;
+}
+
+.form-inline .reading-row input[type="date"] {
+  flex: 2 1 220px;
+  width: auto;
+  min-width: 0;
+}
+
+.form-inline .reading-row input[type="number"] {
+  flex: 1 1 140px;
+  width: auto;
+  min-width: 100px;
+}
+
+.form-inline .reading-row .remove-reading {
+  flex: 0 0 auto;
+}
+
+@media (max-width: 600px) {
+  .form-inline .reading-row {
+    flex-wrap: wrap;
+  }
+
+  .form-inline .reading-row input[type="date"],
+  .form-inline .reading-row input[type="number"] {
+    flex-basis: calc(50% - 30px);
+  }
+}
+
 
 /* ===================================================== */
 /*  ELEMENTI BASE FORM                                   */

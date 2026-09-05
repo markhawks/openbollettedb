@@ -5,13 +5,18 @@ require_admin();
 require __DIR__ . '/app/db.php';
 require __DIR__ . '/app/csrf.php';
 
-if (!csrf_verify($_GET['csrf'] ?? null)) {
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    http_response_code(405);
+    header('Allow: POST');
+    exit('Metodo non consentito.');
+}
+if (!csrf_verify($_POST['csrf'] ?? null)) {
     http_response_code(403);
     die('Richiesta non valida (token CSRF mancante o scaduto). Torna indietro e riprova.');
 }
 
-$utilityCode = $_GET['u'] ?? '';
-$year = isset($_GET['year']) ? (int)$_GET['year'] : 0;
+$utilityCode = $_POST['u'] ?? '';
+$year = isset($_POST['year']) ? (int)$_POST['year'] : 0;
 
 $utilitaValide = ['luce', 'gas', 'acqua', 'tari', 'bonifica'];
 
@@ -27,5 +32,5 @@ if (in_array($utilityCode, $utilitaValide, true) && $year >= 2000 && $year <= 21
     $stmt->execute([$utilityCode, (string)$year]);
 }
 
-header('Location: index.php?u=' . urlencode($utilityCode));
+header('Location: index.php?u=' . urlencode($utilityCode), true, 303);
 exit;

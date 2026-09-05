@@ -1,6 +1,9 @@
 <?php
 declare(strict_types=1);
-require __DIR__ . '/../app/db.php';
+require_once __DIR__ . '/../app/auth.php';
+require_login();
+require_once __DIR__ . '/../app/csrf.php';
+$csrfToken = csrf_token();
 
 $pdo = db();
 
@@ -90,12 +93,12 @@ $amounts = array_map(fn($v) => (float)$v, array_column($chartData, 'totale'));
       <div class="card-year-header">
         <h2>Avvisi Bonifica – <?= $year ?></h2>
         <?php if (is_admin()): ?>
-        <a class="btn-reset-year"
-           href="reset_year.php?u=bonifica&year=<?= $year ?>&csrf=<?= urlencode($csrfToken) ?>"
-           onclick="return confirmResetAnno('Bonifica', <?= $year ?>);"
-           title="Elimina tutti gli avvisi Bonifica di questo anno">
-          🗑️ Svuota anno
-        </a>
+        <form method="post" action="reset_year.php" class="inline-action-form" onsubmit="return confirmResetAnno('Bonifica', <?= $year ?>);">
+          <input type="hidden" name="csrf" value="<?= htmlspecialchars($csrfToken) ?>">
+          <input type="hidden" name="u" value="bonifica">
+          <input type="hidden" name="year" value="<?= $year ?>">
+          <button class="btn-reset-year" type="submit" title="Elimina tutti gli avvisi Bonifica di questo anno">🗑️ Svuota anno</button>
+        </form>
         <?php endif; ?>
       </div>
       <table>
@@ -151,9 +154,11 @@ $amounts = array_map(fn($v) => (float)$v, array_column($chartData, 'totale'));
     <td style="text-align:center; white-space:nowrap;">
       <?php if (is_admin()): ?>
       <a href="edit_bill.php?id=<?= $b['id'] ?>&u=bonifica" title="Modifica">✏️</a>
-      <a href="delete_bill.php?id=<?= $b['id'] ?>&u=bonifica&csrf=<?= urlencode($csrfToken) ?>"
-         onclick="return confirm('Eliminare questo avviso Bonifica?');"
-         title="Elimina">🗑️</a>
+      <form method="post" action="delete_bill.php" class="inline-action-form" onsubmit="return confirm('Eliminare questo avviso Bonifica?');">
+        <input type="hidden" name="csrf" value="<?= htmlspecialchars($csrfToken) ?>">
+        <input type="hidden" name="id" value="<?= (int)$b['id'] ?>">
+        <button type="submit" class="icon-action" title="Elimina">🗑️</button>
+      </form>
       <?php else: ?>
       <span class="muted">—</span>
       <?php endif; ?>

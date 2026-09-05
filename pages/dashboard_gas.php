@@ -1,6 +1,9 @@
 <?php
 declare(strict_types=1);
-require __DIR__ . '/../app/db.php';
+require_once __DIR__ . '/../app/auth.php';
+require_login();
+require_once __DIR__ . '/../app/csrf.php';
+$csrfToken = csrf_token();
 
 $pdo = db();
 
@@ -46,6 +49,7 @@ $sumStmt = $pdo->prepare("
   SELECT 
     strftime('%Y', period_start) AS year,
     SUM(amount_total) AS total_complessivo,
+    COUNT(DISTINCT strftime('%Y-%m', period_start)) AS month_count,
     (
       SELECT SUM(value)
       FROM bill_metrics m
@@ -160,12 +164,12 @@ function gasGrowthBadge(array $crescita, string $label, string $unit): string {
       <?php endif; ?>
     </h2>
     <?php if (is_admin()): ?>
-    <a class="btn-reset-year"
-       href="reset_year.php?u=gas&year=<?= $year ?>&csrf=<?= urlencode($csrfToken) ?>"
-       onclick="return confirmResetAnno('Gas', <?= $year ?>);"
-       title="Elimina tutte le bollette Gas di questo anno">
-      🗑️ Svuota anno
-    </a>
+    <form method="post" action="reset_year.php" class="inline-action-form" onsubmit="return confirmResetAnno('Gas', <?= $year ?>);">
+      <input type="hidden" name="csrf" value="<?= htmlspecialchars($csrfToken) ?>">
+      <input type="hidden" name="u" value="gas">
+      <input type="hidden" name="year" value="<?= $year ?>">
+      <button class="btn-reset-year" type="submit" title="Elimina tutte le bollette Gas di questo anno">🗑️ Svuota anno</button>
+    </form>
     <?php endif; ?>
   </div>
   <table>
@@ -264,12 +268,11 @@ function gasGrowthBadge(array $crescita, string $label, string $unit): string {
        style="text-decoration:none; margin-right:8px;">
       ✏️
     </a>
-    <a href="delete_bill.php?id=<?= $b['id'] ?>&u=gas&csrf=<?= urlencode($csrfToken) ?>"
-       title="Elimina"
-       onclick="return confirm('Eliminare questa bolletta gas?');"
-       style="text-decoration:none;">
-      🗑️
-    </a>
+    <form method="post" action="delete_bill.php" class="inline-action-form" onsubmit="return confirm('Eliminare questa bolletta gas?');">
+      <input type="hidden" name="csrf" value="<?= htmlspecialchars($csrfToken) ?>">
+      <input type="hidden" name="id" value="<?= (int)$b['id'] ?>">
+      <button type="submit" class="icon-action" title="Elimina">🗑️</button>
+    </form>
     <?php else: ?>
     <span class="muted">—</span>
     <?php endif; ?>

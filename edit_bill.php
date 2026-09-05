@@ -3,21 +3,23 @@ declare(strict_types=1);
 require __DIR__ . '/app/auth.php';
 require_admin();
 require __DIR__ . '/app/db.php';
+require __DIR__ . '/app/csrf.php';
+require __DIR__ . '/app/validation.php';
 
 $pdo = db();
 
 $billId = isset($_GET['id']) ? (int)$_GET['id'] : 0;
-$utilityCode = $_GET['u'] ?? 'luce';
 
 if ($billId <= 0) {
   die("ID bolletta mancante o non valido");
 }
 
 /* 1) Carico bolletta */
-$stmt = $pdo->prepare("SELECT * FROM bills WHERE id = ?");
+$stmt = $pdo->prepare("SELECT b.*, u.code AS utility_code FROM bills b JOIN utilities u ON u.id = b.utility_id WHERE b.id = ?");
 $stmt->execute([$billId]);
 $bill = $stmt->fetch(PDO::FETCH_ASSOC);
 if (!$bill) die("Bolletta non trovata");
+$utilityCode = (string)$bill['utility_code'];
 
 /* 2) Carico metriche in array associativo */
 $mStmt = $pdo->prepare("SELECT `key`, value FROM bill_metrics WHERE bill_id = ?");
@@ -42,51 +44,54 @@ function saveMetric(PDO $pdo, int $billId, string $key, $value, string $unit): v
 
 $errors = [];
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-  $period_start = trim($_POST['period_start'] ?? '');
-  $period_end   = trim($_POST['period_end'] ?? '');
-  $amount_total = trim($_POST['amount_total'] ?? '');
-  $notes        = trim($_POST['notes'] ?? '');
+  if (!csrf_verify(post_string($_POST, 'csrf'))) {
+    http_response_code(403);
+    die('Richiesta non valida (token CSRF mancante o scaduto).');
+  }
+  $errors = validate_bill_input($utilityCode, $_POST);
+  $period_start = post_string($_POST, 'period_start');
+  $period_end   = post_string($_POST, 'period_end');
+  $amount_total = post_string($_POST, 'amount_total');
+  $notes        = post_string($_POST, 'notes');
 
   // Metriche generiche
-  $extra_adjust = trim($_POST['extra_adjust'] ?? '0');
+  $extra_adjust = post_string($_POST, 'extra_adjust', '0');
 
   // LUCE
-  $kwh = trim($_POST['kwh'] ?? '');
-  $canone_rai = trim($_POST['canone_rai'] ?? '');
-  $energy_price   = trim($_POST['energy_price'] ?? '');
-  $commercial_fee = trim($_POST['commercial_fee'] ?? '');
+  $kwh = post_string($_POST, 'kwh');
+  $canone_rai = post_string($_POST, 'canone_rai');
+  $energy_price   = post_string($_POST, 'energy_price');
+  $commercial_fee = post_string($_POST, 'commercial_fee');
   $stima          = isset($_POST['stima']) ? 1 : 0;
 
 
   // GAS
-  $lettura_ini = trim($_POST['lettura_ini'] ?? '');
-  $lettura_fin = trim($_POST['lettura_fin'] ?? '');
-  $smc         = trim($_POST['smc'] ?? '');
+  $lettura_ini = post_string($_POST, 'lettura_ini');
+  $lettura_fin = post_string($_POST, 'lettura_fin');
+  $smc         = post_string($_POST, 'smc');
 
   // TARI
-  $periodo_competenza = trim($_POST['periodo_competenza'] ?? '');
-  $numero_fattura     = trim($_POST['numero_fattura'] ?? '');
-  $tipo_avviso        = trim($_POST['tipo_avviso'] ?? 'Ordinaria');
-  $raccolta_diff      = trim($_POST['raccolta_diff'] ?? '');
-  $data_fattura       = trim($_POST['data_fattura'] ?? '');
+  $periodo_competenza = post_string($_POST, 'periodo_competenza');
+  $numero_fattura     = post_string($_POST, 'numero_fattura');
+  $tipo_avviso        = post_string($_POST, 'tipo_avviso', 'Ordinaria');
+  $raccolta_diff      = post_string($_POST, 'raccolta_diff');
+  $data_fattura       = post_string($_POST, 'data_fattura');
 
   // ACQUA
-  $mc_start   = trim($_POST['mc_start'] ?? '');
-  $mc_end     = trim($_POST['mc_end'] ?? '');
-  $consumo_mc = trim($_POST['consumo_mc'] ?? '');
+  $mc_start   = post_string($_POST, 'mc_start');
+  $mc_end     = post_string($_POST, 'mc_end');
+  $consumo_mc = post_string($_POST, 'consumo_mc');
+  $next_reading_start = post_string($_POST, 'next_reading_start');
+  $next_reading_end   = post_string($_POST, 'next_reading_end');
 
   // storico letture ACQUA (data + m³, righe ripetibili)
   $reading_dates  = $_POST['reading_date'] ?? [];
   $reading_values = $_POST['reading_value'] ?? [];
 
   // BONIFICA
-  $data_scadenza  = trim($_POST['data_scadenza'] ?? '');
-  $data_pagamento = trim($_POST['data_pagamento'] ?? '');
+  $data_scadenza  = post_string($_POST, 'data_scadenza');
+  $data_pagamento = post_string($_POST, 'data_pagamento');
 
-
-  /* Validazioni base */
-  if (!$period_start || !$period_end) $errors[] = "Le date del periodo sono obbligatorie.";
-  if ($amount_total === '' || !is_numeric($amount_total)) $errors[] = "L'importo deve essere un numero.";
 
   if ($utilityCode === 'tari') {
 
@@ -145,7 +150,7 @@ if ($utilityCode === 'bonifica') {
     $pdo->beginTransaction();
     try {
     /* Update tabella bills */
-    $issue_date = trim($_POST['issue_date'] ?? '');
+    $issue_date = post_string($_POST, 'issue_date');
     $upd = $pdo->prepare("
       UPDATE bills
       SET
@@ -283,6 +288,9 @@ if ($utilityCode === 'bonifica') {
       else
         saveMetric($pdo, $billId, 'stima', null, 'bool');
 
+      saveMetric($pdo, $billId, 'next_reading_start', $next_reading_start ?: null, 'date');
+      saveMetric($pdo, $billId, 'next_reading_end', $next_reading_end ?: null, 'date');
+
       /* Storico letture: si cancellano e si reinseriscono da capo */
       $pdo->prepare("DELETE FROM bill_readings WHERE bill_id = ?")->execute([$billId]);
       $insReading = $pdo->prepare("INSERT INTO bill_readings (bill_id, reading_date, reading_value) VALUES (?,?,?)");
@@ -307,7 +315,8 @@ if ($utilityCode === 'bonifica') {
       exit;
     } catch (Throwable $e) {
       $pdo->rollBack();
-      $errors[] = "Errore durante il salvataggio: " . $e->getMessage();
+      error_log('Errore modifica bolletta: ' . $e->getMessage());
+      $errors[] = "Errore durante il salvataggio. Riprova o consulta il log del server.";
     }
   }
 }
@@ -325,8 +334,7 @@ if ($existingTrimestre === '') {
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Modifica Bolletta</title>
   <link rel="icon" type="image/svg+xml" href="assets/img/favicon.svg">
-  <link rel="stylesheet" href="assets/css/new_bill_style.css">
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link rel="stylesheet" href="assets/css/new_bill_style.css?v=<?= filemtime('assets/css/new_bill_style.css') ?>">
 </head>
 <body>
 <div class="container">
@@ -346,6 +354,7 @@ if ($existingTrimestre === '') {
     <?php endif; ?>
 
     <form method="post">
+      <input type="hidden" name="csrf" value="<?= htmlspecialchars(csrf_token()) ?>">
       <div class="form-inline">
         
         <div class="field">
@@ -471,6 +480,18 @@ if ($existingTrimestre === '') {
                   <input type="checkbox" name="stima" value="1" <?= !empty($metrics['stima']) ? 'checked' : '' ?>>
                   📊 Bolletta stimata (previsione)
                 </label>
+              </div>
+
+              <div class="field">
+                <label>Prossima lettura dal</label>
+                <input type="date" name="next_reading_start"
+                      value="<?= htmlspecialchars((string)($metrics['next_reading_start'] ?? '')) ?>">
+              </div>
+              <div class="field">
+                <label>Prossima lettura al</label>
+                <input type="date" name="next_reading_end"
+                      value="<?= htmlspecialchars((string)($metrics['next_reading_end'] ?? '')) ?>">
+                <small class="muted">Periodo indicato in bolletta per comunicare l'autolettura</small>
               </div>
 
               <div class="field wide">

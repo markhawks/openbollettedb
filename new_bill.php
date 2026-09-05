@@ -4,12 +4,16 @@ declare(strict_types=1);
 require __DIR__ . '/app/auth.php';
 require_admin();
 require __DIR__ . '/app/db.php';
+require __DIR__ . '/app/csrf.php';
+require __DIR__ . '/app/validation.php';
 
 $firstDayPrevMonth = date('Y-m-01', strtotime('first day of last month'));
 $lastDayPrevMonth  = date('Y-m-t',  strtotime('first day of last month'));
 
 $suggested_year = date('Y', strtotime('first day of last month'));
 $suggested_month = date('m', strtotime('first day of last month'));
+$firstSelectableYear = 2000;
+$lastSelectableYear = (int)date('Y') + 5;
 $valore_canone = ((int)$suggested_month <= 10) ? (($suggested_year == "2024") ? 7.00 : 9.00) : 0.00;
 
 $pdo = db();
@@ -65,57 +69,60 @@ if ($readingStmt) {
 
 $errors = [];
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-  $period_start = trim($_POST['period_start'] ?? '');
-  $period_end   = trim($_POST['period_end'] ?? '');
-  $amount_total = trim($_POST['amount_total'] ?? '');
-  $notes        = trim($_POST['notes'] ?? '');
-  $data_fattura = trim($_POST['data_fattura'] ?? '');
+  if (!csrf_verify(post_string($_POST, 'csrf'))) {
+    http_response_code(403);
+    die('Richiesta non valida (token CSRF mancante o scaduto).');
+  }
+  $errors = validate_bill_input($utilityCode, $_POST);
+  $period_start = post_string($_POST, 'period_start');
+  $period_end   = post_string($_POST, 'period_end');
+  $amount_total = post_string($_POST, 'amount_total');
+  $notes        = post_string($_POST, 'notes');
+  $data_fattura = post_string($_POST, 'data_fattura');
   $anno_periodo = (int)date('Y', strtotime($period_start));
   $periodo_competenza_full = '';
-  if (!empty($_POST['periodo_competenza'])) {
-    $q = trim($_POST['periodo_competenza']); // Q1, Q2, ...
+  if (post_string($_POST, 'periodo_competenza') !== '') {
+    $q = post_string($_POST, 'periodo_competenza'); // Q1, Q2, ...
     $periodo_competenza_full = $q . ' ' . $anno_periodo; // Q1 2023
   }
-  $issue_date = trim($_POST['issue_date'] ?? '');
+  $issue_date = post_string($_POST, 'issue_date');
 
 
 
 
 
   // Metriche
-  $kwh = trim($_POST['kwh'] ?? '');
-  $smc = trim($_POST['smc'] ?? '');
-  $canone_rai = trim($_POST['canone_rai'] ?? '');
-  $extra_adjust = trim($_POST['extra_adjust'] ?? '0');
-  $lettura_ini = trim($_POST['lettura_ini'] ?? '');
-  $lettura_fin = trim($_POST['lettura_fin'] ?? '');
-  $energy_price   = trim($_POST['energy_price'] ?? '');
-  $commercial_fee = trim($_POST['commercial_fee'] ?? '');
+  $kwh = post_string($_POST, 'kwh');
+  $smc = post_string($_POST, 'smc');
+  $canone_rai = post_string($_POST, 'canone_rai');
+  $extra_adjust = post_string($_POST, 'extra_adjust', '0');
+  $lettura_ini = post_string($_POST, 'lettura_ini');
+  $lettura_fin = post_string($_POST, 'lettura_fin');
+  $energy_price   = post_string($_POST, 'energy_price');
+  $commercial_fee = post_string($_POST, 'commercial_fee');
   $stima          = isset($_POST['stima']) ? 1 : 0;
 
   // metriche ACQUA
-  $mc_start   = trim($_POST['mc_start'] ?? '');
-  $mc_end     = trim($_POST['mc_end'] ?? '');
-  $consumo_mc = trim($_POST['consumo_mc'] ?? '');
-  $mc_conguaglio = trim($_POST['mc_conguaglio'] ?? '0');
+  $mc_start   = post_string($_POST, 'mc_start');
+  $mc_end     = post_string($_POST, 'mc_end');
+  $consumo_mc = post_string($_POST, 'consumo_mc');
+  $mc_conguaglio = post_string($_POST, 'mc_conguaglio', '0');
+  $next_reading_start = post_string($_POST, 'next_reading_start');
+  $next_reading_end   = post_string($_POST, 'next_reading_end');
 
   // storico letture ACQUA (data + m³, righe ripetibili)
   $reading_dates  = $_POST['reading_date'] ?? [];
   $reading_values = $_POST['reading_value'] ?? [];
 
   // metriche BONIFICA
-  $data_scadenza  = trim($_POST['data_scadenza'] ?? '');
-  $data_pagamento = trim($_POST['data_pagamento'] ?? '');
+  $data_scadenza  = post_string($_POST, 'data_scadenza');
+  $data_pagamento = post_string($_POST, 'data_pagamento');
 
 
 
 
 
 
-
-
-  if (!$period_start || !$period_end) $errors[] = "Periodo obbligatorio.";
-  if (!is_numeric($amount_total)) $errors[] = "Importo non valido.";
 
 
   if ($utilityCode === 'acqua') {
@@ -195,6 +202,7 @@ if ($utilityCode === 'luce') {
   if ($stima) {
     $m[] = ['stima', 1, 'bool'];
   }
+
 }
 
 
@@ -230,8 +238,9 @@ if ($utilityCode === 'tari') {
     $m[] = ['tipo_avviso', $_POST['tipo_avviso'], 'text'];
   }
 
-  if ($_POST['raccolta_diff'] !== '') {
-    $m[] = ['raccolta_diff', (float)$_POST['raccolta_diff'], '%'];
+  $raccoltaDiff = trim((string)($_POST['raccolta_diff'] ?? ''));
+  if ($raccoltaDiff !== '' && is_numeric($raccoltaDiff)) {
+    $m[] = ['raccolta_diff', (float)$raccoltaDiff, '%'];
   }
 }
 
@@ -256,6 +265,11 @@ if ($utilityCode === 'acqua') {
 
   if ($stima) {
     $m[] = ['stima', 1, 'bool'];
+  }
+
+  if ($next_reading_start !== '' && $next_reading_end !== '') {
+    $m[] = ['next_reading_start', $next_reading_start, 'date'];
+    $m[] = ['next_reading_end', $next_reading_end, 'date'];
   }
 
 }
@@ -302,7 +316,8 @@ if ($utilityCode === 'bonifica') {
       exit;
     } catch (Throwable $e) {
       $pdo->rollBack();
-      $errors[] = "Errore: " . $e->getMessage();
+      error_log('Errore salvataggio nuova bolletta: ' . $e->getMessage());
+      $errors[] = "Errore durante il salvataggio. Riprova o consulta il log del server.";
     }
   }
 }
@@ -326,12 +341,12 @@ if ($utilityCode === 'bonifica') {
     <section class="card">
       <?php if ($errors): ?>
         <div class="card" style="background:#fff3f3;border:1px solid #ffd0d0">
-          <ul><?php foreach ($errors as $er): ?><li><?=$er?></li><?php endforeach; ?></ul>
+          <ul><?php foreach ($errors as $er): ?><li><?= htmlspecialchars($er) ?></li><?php endforeach; ?></ul>
         </div>
       <?php endif; ?>
 
       <div class="year-selector">
-        <?php for ($y = 2021; $y <= 2030; $y++): ?>
+        <?php for ($y = $firstSelectableYear; $y <= $lastSelectableYear; $y++): ?>
           <button type="button" class="year-btn" data-year="<?=$y?>"><?=$y?></button>
         <?php endfor; ?>
       </div>
@@ -343,6 +358,7 @@ if ($utilityCode === 'bonifica') {
       </div>
 
 <form method="post">
+  <input type="hidden" name="csrf" value="<?= htmlspecialchars(csrf_token()) ?>">
   <div class="form-inline">
 
     <div class="field">
@@ -439,6 +455,18 @@ if ($utilityCode === 'bonifica') {
         </label>
       </div>
 
+      <div class="field">
+        <label>Prossima lettura dal</label>
+        <input type="date" name="next_reading_start"
+              value="<?= htmlspecialchars($_POST['next_reading_start'] ?? '') ?>">
+      </div>
+      <div class="field">
+        <label>Prossima lettura al</label>
+        <input type="date" name="next_reading_end"
+              value="<?= htmlspecialchars($_POST['next_reading_end'] ?? '') ?>">
+        <small class="muted">Periodo indicato in bolletta per comunicare l'autolettura</small>
+      </div>
+
       <div class="field wide">
         <label>Storico letture (opzionale)</label>
         <div id="readings-list">
@@ -464,7 +492,7 @@ if ($utilityCode === 'bonifica') {
       <div class="field">
         <label>Anno</label>
         <select name="anno_bonifica" id="anno_bonifica">
-          <?php for ($y = 2021; $y <= 2030; $y++): ?>
+          <?php for ($y = $firstSelectableYear; $y <= $lastSelectableYear; $y++): ?>
             <option value="<?=$y?>" <?= ($y == (int)$suggested_year) ? 'selected' : '' ?>><?=$y?></option>
           <?php endfor; ?>
         </select>

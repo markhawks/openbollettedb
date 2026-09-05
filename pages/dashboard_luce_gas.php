@@ -1,6 +1,7 @@
 <?php
 declare(strict_types=1);
-require __DIR__ . '/../app/db.php';
+require_once __DIR__ . '/../app/auth.php';
+require_login();
 
 $pdo = db();
 
@@ -24,7 +25,6 @@ $stmt = $pdo->prepare("
   LEFT JOIN bill_metrics mk
     ON b.id = mk.bill_id AND mk.key = 'kwh'
   WHERE b.utility_id = ?
-  AND strftime('%Y', COALESCE(b.period_start, b.issue_date)) >= '2021'
   GROUP BY anno, mese
 ");
 /* LUCE */
@@ -54,6 +54,11 @@ SELECT
       SELECT id FROM utilities WHERE code='gas'
   ) THEN amount_total ELSE 0 END) AS gas_totale,
 
+  COUNT(DISTINCT CASE WHEN utility_id = (SELECT id FROM utilities WHERE code='luce')
+    THEN strftime('%Y-%m', COALESCE(period_start,issue_date)) END) AS luce_months,
+  COUNT(DISTINCT CASE WHEN utility_id = (SELECT id FROM utilities WHERE code='gas')
+    THEN strftime('%Y-%m', COALESCE(period_start,issue_date)) END) AS gas_months,
+
   /* consumo gas */
   (
     SELECT SUM(value)
@@ -75,7 +80,7 @@ SELECT
   ) AS total_kwh
 
 FROM bills b
-WHERE strftime('%Y',COALESCE(period_start,issue_date)) >= '2021'
+WHERE utility_id IN (SELECT id FROM utilities WHERE code IN ('luce','gas'))
 GROUP BY year
 ORDER BY year DESC
 ");
@@ -112,7 +117,6 @@ $stmt = $pdo->prepare("
   LEFT JOIN bill_metrics ms
     ON b.id = ms.bill_id AND ms.key = 'smc'
   WHERE b.utility_id = ?
-  AND strftime('%Y', COALESCE(b.period_start, b.issue_date)) >= '2021'
   GROUP BY anno, mese
 ");
 /* GAS */
@@ -155,7 +159,12 @@ foreach ($gasRows as $r) {
     $y=$r['anno'];
     $m=$r['mese'];
 
-    if (!isset($data[$y])) continue;
+    if (!isset($data[$y])) {
+        for ($i=1;$i<=12;$i++) {
+            $month = str_pad((string)$i,2,"0",STR_PAD_LEFT);
+            $data[$y][$month] = ['kwh'=>0, 'importo_luce'=>0, 'smc'=>0, 'importo_gas'=>0];
+        }
+    }
 
     $data[$y][$m]['smc']=(float)$r['smc'];
     $data[$y][$m]['importo_gas']=(float)$r['importo_gas'];
@@ -174,12 +183,7 @@ krsort($data);
 foreach ($data as &$months) {
     krsort($months);
 }
-
-/* Ordino */
-krsort($data);
-foreach ($data as &$months) {
-  krsort($months);
-}
+unset($months);
 
 
 
@@ -194,8 +198,6 @@ foreach ($data as &$months) {
     <h1>💡🔥 Luce + Gas</h1>
     <div class="sub">Storico consumi e costi Luce + Gas</div>
   </div>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
 </header>
 
 <!-- GRAFICO CONSUMI -->
@@ -293,8 +295,8 @@ foreach ($months as $m => $v):
 
   $totale = $luceTot + $gasTot;
 
-  $mediaLuce = $luceTot / 12;
-  $mediaGas  = $gasTot / 12;
+  $mediaLuce = $luceTot / max(1, (int)$yt['luce_months']);
+  $mediaGas  = $gasTot / max(1, (int)$yt['gas_months']);
 ?>
 
 <li style="flex-direction:column;gap:10px;padding:15px 0">
@@ -449,14 +451,9 @@ document.addEventListener('DOMContentLoaded', function () {
     checkbox.id = "year_" + year;
     checkbox.dataset.index = index;
 
-    /* default ON solo 2025 e 2026 */
-    if (year === "2025" || year === "2026") {
-      checkbox.checked = true;
-      chart.setDatasetVisibility(index, true);
-    } else {
-      checkbox.checked = false;
-      chart.setDatasetVisibility(index, false);
-    }
+    // Tutti gli anni disponibili sono visibili al caricamento.
+    checkbox.checked = true;
+    chart.setDatasetVisibility(index, true);
 
     checkbox.addEventListener("change", function () {
       const i = this.dataset.index;

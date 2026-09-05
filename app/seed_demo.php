@@ -1,5 +1,9 @@
 <?php
 declare(strict_types=1);
+if (PHP_SAPI !== 'cli') {
+    http_response_code(403);
+    exit('Questo comando può essere eseguito soltanto da CLI.');
+}
 
 /**
  * Popola il database con bollette di esempio (dati interamente inventati),

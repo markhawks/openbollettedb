@@ -11,21 +11,21 @@
 }
 
 .login-wrap {
-  width: 100%;
-  max-width: 380px;
-  padding: 20px;
+  width: clamp(460px, 48vw, 620px);
+  max-width: calc(100vw - 2cm);
   box-sizing: border-box;
 }
 
 .login-card {
   background: #fff;
   border-radius: 18px;
-  padding: 36px 32px;
+  padding: 36px clamp(32px, 6vw, 56px);
   box-shadow: 0 12px 32px rgba(31, 111, 235, .12), 0 4px 12px rgba(0,0,0,.05);
 }
 
 .login-brand {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: center;
   gap: 10px;

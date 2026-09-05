@@ -3,7 +3,7 @@
     <div class="brand-title">
       <span class="logo-icon">🧾</span>
       <h1><span class="logo-open">Open</span><span class="logo-name">BolletteDB</span></h1>
-      <span class="version-badge">v1.4 &middot; 16/08/2026</span>
+      <span class="version-badge">v1.5 &middot; 05/09/2026</span>
       <a class="changelog-link" href="changelog.php" target="_blank" rel="noopener" title="Note di rilascio – cosa c'è di nuovo">📝</a>
     </div>
     <div class="sub">Gestione bollette domestiche</div>
@@ -17,6 +17,9 @@
     <a class="btn secondary" href="index.php?u=acqua">💧 Acqua</a>
     <a class="btn secondary" href="index.php?u=bonifica">🌾 Bonifica</a>
     <a class="btn secondary" href="account.php" title="Gestione utenti">⚙️ Utente</a>
-    <a class="btn secondary" href="logout.php?csrf=<?= urlencode($csrfToken) ?>" title="Esci da OpenBolletteDB">🔓 Esci</a>
+    <form method="post" action="logout.php" class="inline-action-form">
+      <input type="hidden" name="csrf" value="<?= htmlspecialchars($csrfToken) ?>">
+      <button class="btn secondary" type="submit" title="Esci da OpenBolletteDB">🔓 Esci</button>
+    </form>
   </div>
 </header>
