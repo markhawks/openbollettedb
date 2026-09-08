@@ -6,6 +6,37 @@ require __DIR__ . '/app/db.php';
 require __DIR__ . '/app/csrf.php';
 require __DIR__ . '/app/validation.php';
 
+function normalizeItalianDateInput(mixed $value): mixed
+{
+  if (!is_scalar($value)) return $value;
+  $date = trim((string)$value);
+  if (preg_match('#^(\d{2})/(\d{2})/(\d{4})$#', $date, $match)) {
+    return $match[3] . '-' . $match[2] . '-' . $match[1];
+  }
+  return $date;
+}
+
+function displayItalianDate(mixed $value): string
+{
+  if (!is_scalar($value)) return '';
+  $date = trim((string)$value);
+  if (preg_match('/^(\d{4})-(\d{2})-(\d{2})$/', $date, $match)) {
+    return $match[3] . '/' . $match[2] . '/' . $match[1];
+  }
+  return $date;
+}
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+  foreach (['issue_date', 'period_start', 'period_end', 'data_fattura', 'next_reading_start', 'next_reading_end', 'data_scadenza', 'data_pagamento'] as $dateKey) {
+    if (array_key_exists($dateKey, $_POST)) {
+      $_POST[$dateKey] = normalizeItalianDateInput($_POST[$dateKey]);
+    }
+  }
+  if (isset($_POST['reading_date']) && is_array($_POST['reading_date'])) {
+    $_POST['reading_date'] = array_map('normalizeItalianDateInput', $_POST['reading_date']);
+  }
+}
+
 $pdo = db();
 
 $billId = isset($_GET['id']) ? (int)$_GET['id'] : 0;
@@ -20,6 +51,26 @@ $stmt->execute([$billId]);
 $bill = $stmt->fetch(PDO::FETCH_ASSOC);
 if (!$bill) die("Bolletta non trovata");
 $utilityCode = (string)$bill['utility_code'];
+
+$latestTariIdentifiers = ['codice_cliente' => '', 'codice_utenza' => ''];
+if ($utilityCode === 'tari') {
+  $latestIdentifiersStmt = $pdo->prepare("
+    SELECT m.key, m.value
+    FROM bill_metrics m
+    JOIN bills b ON b.id = m.bill_id
+    WHERE b.utility_id = ?
+      AND m.key IN ('codice_cliente', 'codice_utenza')
+      AND TRIM(CAST(m.value AS TEXT)) <> ''
+    ORDER BY COALESCE(NULLIF(b.issue_date, ''), b.period_end) DESC, b.id DESC
+  ");
+  $latestIdentifiersStmt->execute([(int)$bill['utility_id']]);
+  foreach ($latestIdentifiersStmt->fetchAll(PDO::FETCH_ASSOC) as $identifier) {
+    $key = (string)$identifier['key'];
+    if (isset($latestTariIdentifiers[$key]) && $latestTariIdentifiers[$key] === '') {
+      $latestTariIdentifiers[$key] = (string)$identifier['value'];
+    }
+  }
+}
 
 /* 2) Carico metriche in array associativo */
 $mStmt = $pdo->prepare("SELECT `key`, value FROM bill_metrics WHERE bill_id = ?");
@@ -56,6 +107,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
   // Metriche generiche
   $extra_adjust = post_string($_POST, 'extra_adjust', '0');
+  if ($utilityCode === 'tari') {
+    $importoLordoTari = (float)$amount_total;
+    $creditoTari = (float)post_string($_POST, 'tari_credit', '0');
+    $amount_total = (string)max(0, $importoLordoTari - $creditoTari);
+    $extra_adjust = $creditoTari > 0 ? (string)(-$creditoTari) : '0';
+  }
 
   // LUCE
   $kwh = post_string($_POST, 'kwh');
@@ -76,6 +133,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   $tipo_avviso        = post_string($_POST, 'tipo_avviso', 'Ordinaria');
   $raccolta_diff      = post_string($_POST, 'raccolta_diff');
   $data_fattura       = post_string($_POST, 'data_fattura');
+  $codice_cliente     = post_string($_POST, 'codice_cliente');
+  $codice_utenza      = post_string($_POST, 'codice_utenza');
+  $svuotature_grigio  = post_string($_POST, 'svuotature_grigio');
 
   // ACQUA
   $mc_start   = post_string($_POST, 'mc_start');
@@ -240,7 +300,11 @@ if ($utilityCode === 'bonifica') {
 
       saveMetric($pdo, $billId, 'periodo_competenza', $periodo_competenza ?: null, 'text');
       saveMetric($pdo, $billId, 'numero_fattura', $numero_fattura ?: null, 'text');
+      saveMetric($pdo, $billId, 'codice_cliente', $codice_cliente ?: null, 'text');
+      saveMetric($pdo, $billId, 'codice_utenza', $codice_utenza ?: null, 'text');
+      saveMetric($pdo, $billId, 'svuotature_grigio', $svuotature_grigio !== '' ? (int)$svuotature_grigio : null, 'num');
       saveMetric($pdo, $billId, 'tipo_avviso', $tipo_avviso ?: 'Ordinaria', 'text');
+      saveMetric($pdo, $billId, 'stima', $stima ? 1 : null, 'bool');
 
       if ($raccolta_diff !== '' && is_numeric($raccolta_diff)) {
         saveMetric($pdo, $billId, 'raccolta_diff', (float)$raccolta_diff, '%');
@@ -326,6 +390,9 @@ $existingTrimestre = (string)($metrics['periodo_competenza'] ?? '');
 if ($existingTrimestre === '') {
   $existingTrimestre = 'Q' . (int)ceil(((int)date('n', strtotime($bill['period_start']))) / 3) . ' ' . (int)date('Y', strtotime($bill['period_start']));
 }
+$tariStoredAdjustment = (float)($metrics['extra_adjust'] ?? 0);
+$tariDisplayGross = (float)$bill['amount_total'] - $tariStoredAdjustment;
+$tariDisplayCredit = $tariStoredAdjustment < 0 ? abs($tariStoredAdjustment) : 0;
 ?>
 <!doctype html>
 <html lang="it">
@@ -358,27 +425,27 @@ if ($existingTrimestre === '') {
       <div class="form-inline">
         
         <div class="field">
-          <label>Data immissione</label>
-          <input type="date" name="issue_date"
-                value="<?= htmlspecialchars((string)($bill['issue_date'] ?? '')) ?>">
+          <label>Data scadenza</label>
+          <input type="text" inputmode="numeric" placeholder="gg/mm/aaaa" pattern="\d{2}/\d{2}/\d{4}" name="issue_date"
+                value="<?= htmlspecialchars(displayItalianDate($bill['issue_date'] ?? '')) ?>">
         </div>
 
         <div class="field">
           <label>Dal</label>
-          <input type="date" name="period_start" id="period_start"
-                 value="<?= htmlspecialchars($bill['period_start']) ?>">
+          <input type="text" inputmode="numeric" placeholder="gg/mm/aaaa" pattern="\d{2}/\d{2}/\d{4}" name="period_start" id="period_start"
+                 value="<?= htmlspecialchars(displayItalianDate($bill['period_start'])) ?>"<?= $utilityCode === 'tari' ? ' readonly' : '' ?>>
         </div>
 
         <div class="field">
           <label>Al</label>
-          <input type="date" name="period_end" id="period_end"
-                 value="<?= htmlspecialchars($bill['period_end']) ?>">
+          <input type="text" inputmode="numeric" placeholder="gg/mm/aaaa" pattern="\d{2}/\d{2}/\d{4}" name="period_end" id="period_end"
+                 value="<?= htmlspecialchars(displayItalianDate($bill['period_end'])) ?>"<?= $utilityCode === 'tari' ? ' readonly' : '' ?>>
         </div>
 
         <div class="field">
-          <label>Importo Totale (€)</label>
+          <label><?= $utilityCode === 'tari' ? 'Importo lordo (€)' : 'Importo Totale (€)' ?></label>
           <input type="number" step="0.01" name="amount_total"
-                 value="<?= htmlspecialchars((string)$bill['amount_total']) ?>">
+                 value="<?= htmlspecialchars((string)($utilityCode === 'tari' ? $tariDisplayGross : $bill['amount_total'])) ?>">
         </div>
 
         <?php if ($utilityCode === 'luce'): ?>
@@ -484,13 +551,13 @@ if ($existingTrimestre === '') {
 
               <div class="field">
                 <label>Prossima lettura dal</label>
-                <input type="date" name="next_reading_start"
-                      value="<?= htmlspecialchars((string)($metrics['next_reading_start'] ?? '')) ?>">
+                <input type="text" inputmode="numeric" placeholder="gg/mm/aaaa" pattern="\d{2}/\d{2}/\d{4}" name="next_reading_start"
+                      value="<?= htmlspecialchars(displayItalianDate($metrics['next_reading_start'] ?? '')) ?>">
               </div>
               <div class="field">
                 <label>Prossima lettura al</label>
-                <input type="date" name="next_reading_end"
-                      value="<?= htmlspecialchars((string)($metrics['next_reading_end'] ?? '')) ?>">
+                <input type="text" inputmode="numeric" placeholder="gg/mm/aaaa" pattern="\d{2}/\d{2}/\d{4}" name="next_reading_end"
+                      value="<?= htmlspecialchars(displayItalianDate($metrics['next_reading_end'] ?? '')) ?>">
                 <small class="muted">Periodo indicato in bolletta per comunicare l'autolettura</small>
               </div>
 
@@ -499,14 +566,14 @@ if ($existingTrimestre === '') {
                 <div id="readings-list">
                   <?php if (!$existingReadings): ?>
                     <div class="reading-row" style="display:flex; gap:8px; margin-bottom:6px;">
-                      <input type="date" name="reading_date[]">
+                      <input type="text" inputmode="numeric" placeholder="gg/mm/aaaa" pattern="\d{2}/\d{2}/\d{4}" name="reading_date[]">
                       <input type="number" step="0.01" name="reading_value[]" placeholder="m³">
                       <button type="button" class="btn secondary remove-reading">✕</button>
                     </div>
                   <?php else: ?>
                     <?php foreach ($existingReadings as $r): ?>
                       <div class="reading-row" style="display:flex; gap:8px; margin-bottom:6px;">
-                        <input type="date" name="reading_date[]" value="<?= htmlspecialchars($r['reading_date']) ?>">
+                        <input type="text" inputmode="numeric" placeholder="gg/mm/aaaa" pattern="\d{2}/\d{2}/\d{4}" name="reading_date[]" value="<?= htmlspecialchars(displayItalianDate($r['reading_date'])) ?>">
                         <input type="number" step="0.01" name="reading_value[]" placeholder="m³"
                                value="<?= htmlspecialchars((string)$r['reading_value']) ?>">
                         <button type="button" class="btn secondary remove-reading">✕</button>
@@ -523,14 +590,14 @@ if ($existingTrimestre === '') {
         <?php if ($utilityCode === 'bonifica'): ?>
           <div class="field">
             <label>Data scadenza</label>
-            <input type="date" name="data_scadenza"
-                   value="<?= htmlspecialchars((string)($metrics['data_scadenza'] ?? '')) ?>">
+            <input type="text" inputmode="numeric" placeholder="gg/mm/aaaa" pattern="\d{2}/\d{2}/\d{4}" name="data_scadenza"
+                   value="<?= htmlspecialchars(displayItalianDate($metrics['data_scadenza'] ?? '')) ?>">
           </div>
 
           <div class="field">
             <label>Data di pagamento</label>
-            <input type="date" name="data_pagamento"
-                   value="<?= htmlspecialchars((string)($metrics['data_pagamento'] ?? '')) ?>">
+            <input type="text" inputmode="numeric" placeholder="gg/mm/aaaa" pattern="\d{2}/\d{2}/\d{4}" name="data_pagamento"
+                   value="<?= htmlspecialchars(displayItalianDate($metrics['data_pagamento'] ?? '')) ?>">
           </div>
         <?php endif; ?>
 
@@ -538,7 +605,7 @@ if ($existingTrimestre === '') {
         <?php if ($utilityCode === 'tari'): ?>
           <div class="field">
             <label>Trimestre di competenza</label>
-            <select name="periodo_competenza" id="trimestre" data-current-year="<?= (int)date('Y', strtotime($bill['period_start'])) ?>">
+            <select name="periodo_competenza" id="trimestre" data-current-year="<?= (int)date('Y', strtotime($bill['period_start'])) ?>" required>
 
               <?php
                 $annoCorrente = (int)date('Y', strtotime($bill['period_start']));
@@ -567,19 +634,45 @@ if ($existingTrimestre === '') {
 
 
             </select>
-            <small class="muted">Se cambi trimestre, possiamo aggiornare Dal/Al automaticamente</small>
+            <small class="muted">La selezione aggiorna automaticamente le date Dal/Al.</small>
           </div>
 
           <div class="field">
               <label>Data fattura</label>
-              <input type="date" name="data_fattura"
-              value="<?= htmlspecialchars((string)($metrics['data_fattura'] ?? '')) ?>">
+              <input type="text" inputmode="numeric" placeholder="gg/mm/aaaa" pattern="\d{2}/\d{2}/\d{4}" name="data_fattura"
+              value="<?= htmlspecialchars(displayItalianDate($metrics['data_fattura'] ?? '')) ?>">
           </div>
 
           <div class="field wide">
-            <label>Numero avviso</label>
+            <label>Numero avviso/Fattura n.</label>
             <input type="text" name="numero_fattura"
                    value="<?= htmlspecialchars((string)($metrics['numero_fattura'] ?? '')) ?>">
+          </div>
+
+          <div class="field">
+            <label>Codice Utente/Cliente</label>
+            <div class="field-input-action">
+              <input type="text" name="codice_cliente" maxlength="100"
+                     value="<?= htmlspecialchars((string)($metrics['codice_cliente'] ?? '')) ?>">
+              <?php if ($latestTariIdentifiers['codice_cliente'] !== ''): ?>
+                <button type="button" class="btn secondary use-latest-value" data-target="codice_cliente"
+                        data-value="<?= htmlspecialchars($latestTariIdentifiers['codice_cliente'], ENT_QUOTES) ?>"
+                        title="Inserisci <?= htmlspecialchars($latestTariIdentifiers['codice_cliente'], ENT_QUOTES) ?>">Usa più recente</button>
+              <?php endif; ?>
+            </div>
+          </div>
+
+          <div class="field">
+            <label>Codice Utenza/Contratto n.</label>
+            <div class="field-input-action">
+              <input type="text" name="codice_utenza" maxlength="100"
+                     value="<?= htmlspecialchars((string)($metrics['codice_utenza'] ?? '')) ?>">
+              <?php if ($latestTariIdentifiers['codice_utenza'] !== ''): ?>
+                <button type="button" class="btn secondary use-latest-value" data-target="codice_utenza"
+                        data-value="<?= htmlspecialchars($latestTariIdentifiers['codice_utenza'], ENT_QUOTES) ?>"
+                        title="Inserisci <?= htmlspecialchars($latestTariIdentifiers['codice_utenza'], ENT_QUOTES) ?>">Usa più recente</button>
+              <?php endif; ?>
+            </div>
           </div>
 
           <div class="field">
@@ -601,13 +694,28 @@ if ($existingTrimestre === '') {
             <input type="number" step="0.1" min="0" max="100" name="raccolta_diff"
                    value="<?= htmlspecialchars((string)($metrics['raccolta_diff'] ?? '')) ?>">
           </div>
+
+          <div class="field">
+            <label>Svuotature indifferenziato (20 l)</label>
+            <input type="number" name="svuotature_grigio" min="0" max="20" step="1"
+                   value="<?= htmlspecialchars((string)($metrics['svuotature_grigio'] ?? '0')) ?>">
+          </div>
+
+          <div class="field">
+            <label style="display:flex; align-items:center; gap:6px;">
+              <input type="checkbox" name="stima" value="1" <?= !empty($metrics['stima']) ? 'checked' : '' ?>>
+              📊 Bolletta stimata (previsione)
+            </label>
+          </div>
         <?php endif; ?>
 
         <div class="field">
-          <label>Extra / Bonus (€)</label>
-          <input type="number" step="0.01" name="extra_adjust"
-                 value="<?= htmlspecialchars((string)($metrics['extra_adjust'] ?? '0.00')) ?>">
-          <small class="muted">Usa (-) per i bonus</small>
+          <label><?= $utilityCode === 'tari' ? 'Credito/rimborso utilizzato (€)' : 'Extra / Bonus (€)' ?></label>
+          <input type="number" step="0.01" <?= $utilityCode === 'tari' ? 'min="0" name="tari_credit"' : 'name="extra_adjust"' ?>
+                 value="<?= htmlspecialchars((string)($utilityCode === 'tari' ? $tariDisplayCredit : ($metrics['extra_adjust'] ?? '0.00'))) ?>">
+          <small class="muted"><?= $utilityCode === 'tari'
+            ? 'Inserisci il credito come valore positivo: sarà sottratto automaticamente dall\'importo lordo.'
+            : 'Usa (-) per i bonus' ?></small>
         </div>
 
         <div class="field wide">
@@ -626,6 +734,15 @@ if ($existingTrimestre === '') {
 </div>
 
 <script>
+document.querySelectorAll('.use-latest-value').forEach(button => {
+  button.addEventListener('click', () => {
+    const input = document.querySelector(`input[name="${button.dataset.target}"]`);
+    if (!input) return;
+    input.value = button.dataset.value || '';
+    input.focus();
+  });
+});
+
 // Calcolo automatico Smc (solo se presenti i campi)
 (function(){
   const lIni = document.getElementById('l_ini');
@@ -653,7 +770,7 @@ if ($existingTrimestre === '') {
   if (!trimestreSel || !startInput || !endInput) return;
 
   function fmt(d){
-    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+    return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`;
   }
 
   trimestreSel.addEventListener('change', () => {
@@ -726,7 +843,7 @@ if ($existingTrimestre === '') {
       row.className = 'reading-row';
       row.style.cssText = 'display:flex; gap:8px; margin-bottom:6px;';
       row.innerHTML = `
-        <input type="date" name="reading_date[]">
+        <input type="text" inputmode="numeric" placeholder="gg/mm/aaaa" pattern="\\d{2}/\\d{2}/\\d{4}" name="reading_date[]">
         <input type="number" step="0.01" name="reading_value[]" placeholder="m³">
         <button type="button" class="btn secondary remove-reading">✕</button>
       `;
@@ -737,7 +854,7 @@ if ($existingTrimestre === '') {
 })();
 </script>
 
-
+<script src="assets/js/italian-date-picker.js?v=<?= filemtime('assets/js/italian-date-picker.js') ?>"></script>
 
 </body>
 </html>

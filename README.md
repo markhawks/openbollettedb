@@ -1,9 +1,12 @@
 # OpenBolletteDB
 
+<img src="assets/img/openbollettedb-icon.png" alt="Icona OpenBolletteDB" width="120">
+
 **Italiano** | [English](README.en.md)
 
 ![PHP](https://img.shields.io/badge/PHP-8.x-777BB4?logo=php&logoColor=white)
 ![Database](https://img.shields.io/badge/DB-SQLite-003B57?logo=sqlite&logoColor=white)
+![Versione](https://img.shields.io/badge/versione-v1.6.0-2563eb)
 ![Tested on](https://img.shields.io/badge/tested%20on-Fedora%2044-294172?logo=fedora&logoColor=white)
 [![License: AGPL v3+](https://img.shields.io/badge/license-AGPL--3.0--or--later-blue)](LICENSE)
 
@@ -17,14 +20,19 @@ domestiche (Luce, Gas, Acqua, TARI, Bonifica) in un database SQLite locale.
   registrare anche dati precedenti al 2021.
 - Grafici dei consumi e dei costi, riepiloghi annuali, confronto con l'anno precedente e medie mensili
   calcolate sui mesi effettivamente presenti.
-- Gestione di importi extra, bonus e conguagli; supporto alle bollette stimate per Luce e Acqua.
+- Gestione di importi extra, bonus e conguagli; supporto alle bollette stimate per Luce, Acqua e TARI.
 - Dashboard **Acqua** con letture iniziale/finale, storico delle autoletture, consumo medio giornaliero,
   costo al m³ e distinzione fra consumo rilevato o stimato, conguaglio e quantità addebitata.
 - Periodo per la prossima autolettura Acqua mostrato in tabella, con campanella e date future
   evidenziate automaticamente in rosso.
 - Dashboard **Luce + Gas** con tutti gli anni disponibili visibili nel grafico, compresi quelli che
   contengono dati di una sola delle due utenze.
-- Gestione **TARI** con tipo e numero dell'avviso, periodo di competenza e raccolta differenziata.
+- Gestione **TARI trimestrale** con importo lordo, credito/rimborso, totale da pagare, data fattura e
+  scadenza, numero avviso/fattura, codice utente/cliente e codice utenza/contratto. La percentuale di
+  raccolta differenziata evidenzia le fasce tariffarie; le svuotature dell'indifferenziato da 20 litri
+  sono rappresentate con bidoncini. Sono inclusi stime, totali annuali e confronto con l'anno precedente.
+- Date inserite e visualizzate nei moduli in formato italiano `gg/mm/aaaa`, con calendario integrato e
+  conversione trasparente nel formato ISO utilizzato dal database.
 - Gestione degli avvisi del **Consorzio di bonifica**, incluse scadenza, pagamento e segnalazione dei
   ritardi.
 - Account multipli con ruoli **Amministratore** e **Sola lettura**, modifica del profilo e revoca

@@ -224,7 +224,7 @@ function formatAcquaReading(mixed $value): string
 
 <thead>
   <tr>
-    <th>Data immissione</th>
+    <th>Data scadenza</th>
     <th>Periodo</th>
     <th>Letture</th>
     <th>Prossima lettura</th>
@@ -258,7 +258,7 @@ function formatAcquaReading(mixed $value): string
 ?>
 <tr<?= $isStima ? ' style="opacity:0.7; font-style:italic;"' : '' ?>>
 
-  <!-- DATA IMMISSIONE (prima colonna) -->
+  <!-- DATA SCADENZA (prima colonna) -->
   <td>
     <?= $b['issue_date']
       ? date('d/m/Y', strtotime($b['issue_date']))

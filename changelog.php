@@ -4,6 +4,32 @@ declare(strict_types=1);
 /* Storico versioni: aggiungere una nuova voce in cima ad ogni rilascio */
 $release = [
   [
+    'version' => 'v1.6.0',
+    'date'    => '08/09/2026',
+    'changes' => [
+      'OpenBolletteDB è ora software libero e open source sotto licenza GNU AGPL v3 o successiva, con obbligo di mantenere disponibile il sorgente anche per le versioni modificate offerte tramite rete.',
+      'Documentazione completamente aggiornata e disponibile in italiano e inglese, con panoramica delle funzioni, installazione, sicurezza, backup, limiti noti e licenza.',
+      'Dashboard e moduli TARI aggiornati per distinguere importo lordo, credito/rimborso utilizzato e totale effettivamente da pagare, consentendo di registrare correttamente avvisi azzerati da crediti precedenti.',
+      'Nuova e modifica TARI ora usano esclusivamente anno e trimestre: il selettore mensile è nascosto, Dal/Al sono automatici e il controllo duplicati opera sul trimestre completo.',
+      'Il credito/rimborso TARI si inserisce ora come valore positivo e viene sottratto automaticamente dall\'importo lordo per calcolare il totale da pagare, evitando errori di segno.',
+      'Aggiunti codice cliente e codice utenza alle bollette TARI, salvati come testo e mostrati nello storico subito dopo l\'anno per verificarne eventuali variazioni nel tempo.',
+      'Aggiunto il numero di svuotature trimestrali dell\'indifferenziato da 20 litri: la dashboard TARI le rappresenta con piccoli bidoncini grigi e mostra un bidoncino trasparente quando il valore è zero.',
+      'La tabella TARI ora assegna alle colonne una larghezza dinamica e abilita lo scorrimento orizzontale sui display più stretti, evitando che i nuovi dati risultino compressi.',
+      'Sui monitor di grandi dimensioni la card dello storico TARI si allarga dinamicamente in base alle colonne, fino al limite dello schermo, senza occupare spazio inutilmente.',
+      'Aggiunta la modalità “Bolletta stimata” alla TARI: campo nei moduli, badge nello storico, riga evidenziata e separazione degli importi reali e stimati nel riepilogo e nel grafico annuale.',
+      'La percentuale di raccolta differenziata TARI è ora in grassetto e colorata per fascia tariffaria: rosso sotto il 25%, giallo dal 25% a meno dell\'80% e verde dall\'80%; al passaggio del mouse viene mostrata la legenda completa.',
+      'Le etichette identificative TARI sono state ampliate in “Codice utente/cliente” e “Codice utenza/Contratto n.” per rispecchiare le diverse denominazioni presenti negli avvisi.',
+      'La dicitura TARI “Numero avviso” è stata ampliata in “Numero avviso/Fattura n.” per adattarsi ai diversi documenti emessi dai gestori.',
+      'Tutte le date della pagina Nuova bolletta sono ora visualizzate e inserite stabilmente nel formato italiano gg/mm/aaaa, mantenendo internamente il formato ISO necessario al database.',
+      'Il formato italiano gg/mm/aaaa è stato esteso anche a tutti i campi data della pagina Modifica bolletta, con conversione trasparente nel formato tecnico del database.',
+      'Nei moduli Nuova e Modifica TARI è ora possibile compilare Codice Utente/Cliente e Codice Utenza/Contratto n. richiamando con un pulsante il rispettivo valore più recente.',
+      'Ripristinato il calendario nei campi data di Nuova e Modifica bolletta tramite un selettore compatibile con la visualizzazione italiana gg/mm/aaaa, compresi i campi aggiunti dinamicamente.',
+      'Il precedente campo “Data immissione” rappresenta ora la “Data scadenza”, cioè il termine massimo di pagamento; non viene più compilato automaticamente con la data odierna e nella TARI è mostrato accanto alla Data fattura.',
+      'Nello storico TARI la colonna Data scadenza è stata spostata subito dopo l\'importo Da pagare.',
+      'I riquadri annuali e il riepilogo TARI mostrano ora totale annuo, differenza in euro e variazione percentuale rispetto all\'anno precedente; il confronto è segnalato come non disponibile quando mancano dati validi.',
+    ],
+  ],
+  [
     'version' => 'v1.5.1',
     'date'    => '05/09/2026',
     'changes' => [
@@ -12,8 +38,6 @@ $release = [
       'Le date future del periodo per la prossima autolettura sono ora evidenziate in rosso e accompagnate da una campanella; le date trascorse restano neutre.',
       'Rinnovata la dashboard Acqua: consumo rilevato o stimato, conguaglio e quantità addebitata sono separati per ogni bolletta e riepilogati per anno.',
       'La nuova visualizzazione dei consumi Acqua, inizialmente proposta come anteprima Acqua 2.0, è diventata la dashboard ufficiale e ha sostituito la precedente.',
-      'OpenBolletteDB è ora software libero e open source sotto licenza GNU AGPL v3 o successiva, con obbligo di mantenere disponibile il sorgente anche per le versioni modificate offerte tramite rete.',
-      'Documentazione completamente aggiornata e disponibile in italiano e inglese, con panoramica delle funzioni, installazione, sicurezza, backup, limiti noti e licenza.',
     ],
   ],
   [

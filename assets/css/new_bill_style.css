@@ -149,6 +149,68 @@ textarea {
   color: #1f3b75;
 }
 
+.field-input-action {
+  display: flex;
+  align-items: stretch;
+  gap: 8px;
+}
+
+.field-input-action input {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.field-input-action .btn {
+  flex: 0 0 auto;
+  width: auto;
+  padding: 8px 10px;
+  white-space: nowrap;
+}
+
+.italian-date-control {
+  position: relative;
+  display: flex;
+  width: 100%;
+  align-items: stretch;
+}
+
+.italian-date-control > input:first-child {
+  min-width: 0;
+  padding-right: 42px;
+}
+
+.italian-date-native-picker {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 1px !important;
+  height: 1px;
+  padding: 0 !important;
+  border: 0 !important;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.italian-date-calendar-button {
+  position: absolute;
+  top: 1px;
+  right: 1px;
+  bottom: 1px;
+  width: 38px;
+  padding: 0;
+  border: 0;
+  border-left: 1px solid #d8deea;
+  border-radius: 0 9px 9px 0;
+  background: #f1f5f9;
+  cursor: pointer;
+  font-size: 17px;
+}
+
+.italian-date-calendar-button:hover,
+.italian-date-calendar-button:focus-visible {
+  background: #e2e8f0;
+}
+
 
 /* ===================================================== */
 /*  TABELLE                                              */

@@ -117,6 +117,23 @@ h1 { margin: 0; font-size: 24px; }
 
 .consumption-real { color: #15803d; }
 .consumption-estimated { color: #c2410c; }
+
+.estimated-row {
+  opacity: .72;
+  font-style: italic;
+}
+
+.estimate-badge {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 2px 8px;
+  border-radius: 10px;
+  background: #fef3c7;
+  color: #92400e;
+  font-size: .75rem;
+  font-style: normal;
+  white-space: nowrap;
+}
 .consumption-adjustment { color: #2563eb; }
 .consumption-charged {
   margin-top: 3px;
@@ -163,6 +180,21 @@ h1 { margin: 0; font-size: 24px; }
   align-items: baseline;
   flex-wrap: wrap;
   gap: 8px;
+}
+
+.tari-year-title {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 5px 12px;
+}
+
+.tari-year-stat {
+  padding-left: 12px;
+  border-left: 1px solid #cbd5e1;
+  color: #475569;
+  font-size: .82rem;
+  font-weight: 600;
 }
 
 .btn-reset-year {
@@ -220,6 +252,63 @@ h1 { margin: 0; font-size: 24px; }
 
 .table-container {
   overflow-x: auto; /* Permette lo scroll su schermi piccoli */
+}
+
+/* La TARI contiene più dati delle altre dashboard: le colonne mantengono una
+   larghezza leggibile e la card scorre orizzontalmente quando serve. */
+.tari-table-container {
+  width: 100%;
+  overflow-x: auto;
+  overscroll-behavior-inline: contain;
+  scrollbar-gutter: stable;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Sui monitor ampi la card cresce quanto richiedono realmente le colonne,
+   senza occupare inutilmente tutta la viewport e senza oltrepassarne i bordi. */
+@media (min-width: 1200px) {
+  .tari-data-card {
+    position: relative;
+    left: 50%;
+    width: max-content;
+    min-width: 100%;
+    max-width: calc(100vw - 40px);
+    transform: translateX(-50%);
+  }
+
+  .tari-table th,
+  .tari-table td {
+    padding-left: 8px;
+    padding-right: 8px;
+  }
+}
+
+.tari-table-container:focus-visible {
+  outline: 2px solid #3b82f6;
+  outline-offset: 3px;
+  border-radius: 6px;
+}
+
+.tari-table {
+  width: max-content;
+  min-width: 100%;
+  table-layout: auto;
+}
+
+.tari-table th,
+.tari-table td {
+  white-space: nowrap;
+}
+
+.tari-table .tari-notes {
+  min-width: 180px;
+  max-width: 320px;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.tari-table .tari-period {
+  min-width: 190px;
 }
 
 table {
@@ -339,6 +428,104 @@ td[colspan="9"] {
 .importo-totale {
   font-weight: 800;
   color: #0f172a; /* slate-900 */
+}
+
+.tari-credit {
+  color: #15803d;
+  white-space: nowrap;
+}
+
+.tari-extra-charge {
+  color: #b45309;
+  white-space: nowrap;
+}
+
+.tari-diff-value {
+  display: inline-block;
+  padding: 2px 7px;
+  border-radius: 7px;
+  font-weight: 800;
+  cursor: help;
+}
+
+.tari-diff-value:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 2px;
+}
+
+.tari-diff-high-rate {
+  color: #b91c1c;
+  background: #fee2e2;
+}
+
+.tari-diff-base-rate {
+  color: #854d0e;
+  background: #fef9c3;
+}
+
+.tari-diff-reward-rate {
+  color: #15803d;
+  background: #dcfce7;
+}
+
+.gray-bin-cell {
+  white-space: nowrap;
+}
+
+.gray-bin-icons {
+  display: inline-flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 3px;
+  max-width: 92px;
+  vertical-align: middle;
+}
+
+.gray-bin {
+  position: relative;
+  display: inline-block;
+  width: 11px;
+  height: 13px;
+  border: 1.5px solid #64748b;
+  border-radius: 1px 1px 3px 3px;
+  background: #94a3b8;
+  box-sizing: border-box;
+}
+
+.gray-bin::before {
+  content: '';
+  position: absolute;
+  left: -2px;
+  top: -4px;
+  width: 12px;
+  height: 2px;
+  border-radius: 2px;
+  background: #475569;
+}
+
+.gray-bin::after {
+  content: '';
+  position: absolute;
+  right: 1px;
+  bottom: -3px;
+  width: 2px;
+  height: 2px;
+  border-radius: 50%;
+  background: #475569;
+}
+
+.gray-bin.is-empty {
+  background: transparent;
+  opacity: .55;
+}
+
+.gray-bin-count {
+  display: inline-block;
+  min-width: 1.25em;
+  margin-left: 5px;
+  color: #475569;
+  font-weight: 700;
+  text-align: left;
 }
 
 

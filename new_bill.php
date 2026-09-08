@@ -7,11 +7,48 @@ require __DIR__ . '/app/db.php';
 require __DIR__ . '/app/csrf.php';
 require __DIR__ . '/app/validation.php';
 
+function normalizeItalianDateInput(mixed $value): mixed
+{
+  if (!is_scalar($value)) return $value;
+  $date = trim((string)$value);
+  if (preg_match('#^(\d{2})/(\d{2})/(\d{4})$#', $date, $match)) {
+    return $match[3] . '-' . $match[2] . '-' . $match[1];
+  }
+  return $date;
+}
+
+function displayItalianDate(mixed $value): string
+{
+  if (!is_scalar($value)) return '';
+  $date = trim((string)$value);
+  if (preg_match('/^(\d{4})-(\d{2})-(\d{2})$/', $date, $match)) {
+    return $match[3] . '/' . $match[2] . '/' . $match[1];
+  }
+  return $date;
+}
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+  foreach (['issue_date', 'period_start', 'period_end', 'data_fattura', 'next_reading_start', 'next_reading_end', 'data_scadenza', 'data_pagamento'] as $dateKey) {
+    if (array_key_exists($dateKey, $_POST)) {
+      $_POST[$dateKey] = normalizeItalianDateInput($_POST[$dateKey]);
+    }
+  }
+  if (isset($_POST['reading_date']) && is_array($_POST['reading_date'])) {
+    $_POST['reading_date'] = array_map('normalizeItalianDateInput', $_POST['reading_date']);
+  }
+}
+
 $firstDayPrevMonth = date('Y-m-01', strtotime('first day of last month'));
 $lastDayPrevMonth  = date('Y-m-t',  strtotime('first day of last month'));
 
 $suggested_year = date('Y', strtotime('first day of last month'));
 $suggested_month = date('m', strtotime('first day of last month'));
+$postedPeriodStart = isset($_POST['period_start']) && is_scalar($_POST['period_start'])
+  ? (string)$_POST['period_start']
+  : '';
+$selectedFormYear = preg_match('/^(\d{4})-\d{2}-\d{2}$/', $postedPeriodStart, $yearMatch)
+  ? (int)$yearMatch[1]
+  : (int)$suggested_year;
 $firstSelectableYear = 2000;
 $lastSelectableYear = (int)date('Y') + 5;
 $valore_canone = ((int)$suggested_month <= 10) ? (($suggested_year == "2024") ? 7.00 : 9.00) : 0.00;
@@ -24,6 +61,26 @@ $utStmt->execute([$utilityCode]);
 $utility = $utStmt->fetch(PDO::FETCH_ASSOC);
 
 if (!$utility) { http_response_code(404); die("Utenza non trovata"); }
+
+$latestTariIdentifiers = ['codice_cliente' => '', 'codice_utenza' => ''];
+if ($utilityCode === 'tari') {
+  $latestIdentifiersStmt = $pdo->prepare("
+    SELECT m.key, m.value
+    FROM bill_metrics m
+    JOIN bills b ON b.id = m.bill_id
+    WHERE b.utility_id = ?
+      AND m.key IN ('codice_cliente', 'codice_utenza')
+      AND TRIM(CAST(m.value AS TEXT)) <> ''
+    ORDER BY COALESCE(NULLIF(b.issue_date, ''), b.period_end) DESC, b.id DESC
+  ");
+  $latestIdentifiersStmt->execute([(int)$utility['id']]);
+  foreach ($latestIdentifiersStmt->fetchAll(PDO::FETCH_ASSOC) as $identifier) {
+    $key = (string)$identifier['key'];
+    if (isset($latestTariIdentifiers[$key]) && $latestTariIdentifiers[$key] === '') {
+      $latestTariIdentifiers[$key] = (string)$identifier['value'];
+    }
+  }
+}
 
 
 // 2. Cerco l'ultima lettura finale inserita per questa utenza
@@ -79,6 +136,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   $amount_total = post_string($_POST, 'amount_total');
   $notes        = post_string($_POST, 'notes');
   $data_fattura = post_string($_POST, 'data_fattura');
+  $codice_cliente = post_string($_POST, 'codice_cliente');
+  $codice_utenza = post_string($_POST, 'codice_utenza');
+  $svuotature_grigio = post_string($_POST, 'svuotature_grigio');
   $anno_periodo = (int)date('Y', strtotime($period_start));
   $periodo_competenza_full = '';
   if (post_string($_POST, 'periodo_competenza') !== '') {
@@ -96,6 +156,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   $smc = post_string($_POST, 'smc');
   $canone_rai = post_string($_POST, 'canone_rai');
   $extra_adjust = post_string($_POST, 'extra_adjust', '0');
+  if ($utilityCode === 'tari') {
+    $importoLordoTari = (float)$amount_total;
+    $creditoTari = (float)post_string($_POST, 'tari_credit', '0');
+    $amount_total = (string)max(0, $importoLordoTari - $creditoTari);
+    $extra_adjust = $creditoTari > 0 ? (string)(-$creditoTari) : '0';
+  }
   $lettura_ini = post_string($_POST, 'lettura_ini');
   $lettura_fin = post_string($_POST, 'lettura_fin');
   $energy_price   = post_string($_POST, 'energy_price');
@@ -137,6 +203,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   $checkStmt->execute([(int)$utility['id'], $period_start]);
   if ($checkStmt->fetch()) {
     $errors[] = "Esiste già una bolletta Bonifica per questo anno.";
+  }
+} elseif ($utilityCode === 'tari') {
+  // Una sola bolletta per trimestre e anno, non una per mese.
+  $checkStmt = $pdo->prepare("
+    SELECT bm.bill_id
+    FROM bill_metrics bm
+    JOIN bills b ON b.id = bm.bill_id
+    WHERE b.utility_id = ?
+      AND bm.key = 'periodo_competenza'
+      AND bm.value = ?
+  ");
+  $checkStmt->execute([(int)$utility['id'], $periodo_competenza_full]);
+  if ($checkStmt->fetch()) {
+    $errors[] = "Esiste già una bolletta TARI per il trimestre $periodo_competenza_full.";
   }
 } else {
   $checkStmt = $pdo->prepare("
@@ -232,6 +312,22 @@ if ($utilityCode === 'tari') {
 
   if (!empty($_POST['numero_fattura'])) {
     $m[] = ['numero_fattura', $_POST['numero_fattura'], 'text'];
+  }
+
+  if ($codice_cliente !== '') {
+    $m[] = ['codice_cliente', $codice_cliente, 'text'];
+  }
+
+  if ($codice_utenza !== '') {
+    $m[] = ['codice_utenza', $codice_utenza, 'text'];
+  }
+
+  if ($svuotature_grigio !== '') {
+    $m[] = ['svuotature_grigio', (int)$svuotature_grigio, 'num'];
+  }
+
+  if ($stima) {
+    $m[] = ['stima', 1, 'bool'];
   }
 
   if (!empty($_POST['tipo_avviso'])) {
@@ -351,33 +447,35 @@ if ($utilityCode === 'bonifica') {
         <?php endfor; ?>
       </div>
 
+      <?php if ($utilityCode !== 'tari'): ?>
       <div class="month-selector">
         <?php foreach ($months = [1=>'Gen',2=>'Feb',3=>'Mar',4=>'Apr',5=>'Mag',6=>'Giu',7=>'Lug',8=>'Ago',9=>'Set',10=>'Ott',11=>'Nov',12=>'Dic'] as $m=>$label): ?>
           <button type="button" class="month-btn" data-month="<?=$m?>"><?=$label?></button>
         <?php endforeach; ?>
       </div>
+      <?php endif; ?>
 
 <form method="post">
   <input type="hidden" name="csrf" value="<?= htmlspecialchars(csrf_token()) ?>">
   <div class="form-inline">
 
     <div class="field">
-      <label>Data immissione</label>
-      <input type="date"
+      <label>Data scadenza</label>
+      <input type="text" inputmode="numeric" placeholder="gg/mm/aaaa" pattern="\d{2}/\d{2}/\d{4}"
             name="issue_date"
-            value="<?= htmlspecialchars($_POST['issue_date'] ?? date('Y-m-d')) ?>">
+            value="<?= htmlspecialchars(displayItalianDate($_POST['issue_date'] ?? '')) ?>">
     </div>
     <div class="field">
       <label>Dal</label>
-      <input type="date" name="period_start" value="<?=$firstDayPrevMonth?>">
+      <input type="text" inputmode="numeric" placeholder="gg/mm/aaaa" pattern="\d{2}/\d{2}/\d{4}" name="period_start" value="<?= htmlspecialchars(displayItalianDate($postedPeriodStart ?: $firstDayPrevMonth)) ?>"<?= $utilityCode === 'tari' ? ' readonly' : '' ?>>
     </div>
     <div class="field">
       <label>Al</label>
-      <input type="date" name="period_end" value="<?=$lastDayPrevMonth?>">
+      <input type="text" inputmode="numeric" placeholder="gg/mm/aaaa" pattern="\d{2}/\d{2}/\d{4}" name="period_end" value="<?= htmlspecialchars(displayItalianDate(post_string($_POST, 'period_end', $lastDayPrevMonth))) ?>"<?= $utilityCode === 'tari' ? ' readonly' : '' ?>>
     </div>
     <div class="field">
-      <label>Importo Totale (€)</label>
-      <input type="number" step="0.01" name="amount_total" value="60.00">
+      <label><?= $utilityCode === 'tari' ? 'Importo lordo (€)' : 'Importo Totale (€)' ?></label>
+      <input type="number" step="0.01" min="0" name="amount_total" value="<?= htmlspecialchars(post_string($_POST, 'amount_total', '60.00')) ?>">
     </div>
 
     <?php if ($utilityCode === 'luce'): ?>
@@ -400,19 +498,43 @@ if ($utilityCode === 'bonifica') {
     <?php endif; ?>
 
     <?php if ($utilityCode === 'tari'): ?>
-      <div class="field"><label>Data fattura</label><input type="date" name="data_fattura" value="<?= date('Y-m-d') ?>"></div>
+      <div class="field"><label>Data fattura</label><input type="text" inputmode="numeric" placeholder="gg/mm/aaaa" pattern="\d{2}/\d{2}/\d{4}" name="data_fattura" value="<?= htmlspecialchars(displayItalianDate(post_string($_POST, 'data_fattura', date('Y-m-d')))) ?>"></div>
       <div class="field">
         <label>Trimestre</label>
-        <select name="periodo_competenza" id="trimestre">
+        <select name="periodo_competenza" id="trimestre" required>
           <option value="">— seleziona —</option>
-          <option value="Q1">Q1 (Gen–Mar)</option>
-          <option value="Q2">Q2 (Apr–Giu)</option>
-          <option value="Q3">Q3 (Lug–Set)</option>
-          <option value="Q4">Q4 (Ott–Dic)</option>
+          <?php $selectedQuarter = post_string($_POST, 'periodo_competenza'); ?>
+          <option value="Q1" <?= $selectedQuarter === 'Q1' ? 'selected' : '' ?>>Q1 (Gen–Mar)</option>
+          <option value="Q2" <?= $selectedQuarter === 'Q2' ? 'selected' : '' ?>>Q2 (Apr–Giu)</option>
+          <option value="Q3" <?= $selectedQuarter === 'Q3' ? 'selected' : '' ?>>Q3 (Lug–Set)</option>
+          <option value="Q4" <?= $selectedQuarter === 'Q4' ? 'selected' : '' ?>>Q4 (Ott–Dic)</option>
         </select>
+        <small class="muted">Seleziona prima l'anno in alto, poi il trimestre.</small>
       </div>
 
-      <div class="field"><label>Numero avviso</label><input type="text" name="numero_fattura"></div>
+      <div class="field"><label>Numero avviso/Fattura n.</label><input type="text" name="numero_fattura"></div>
+      <div class="field">
+        <label>Codice Utente/Cliente</label>
+        <div class="field-input-action">
+          <input type="text" name="codice_cliente" maxlength="100" value="<?= htmlspecialchars(post_string($_POST, 'codice_cliente')) ?>">
+          <?php if ($latestTariIdentifiers['codice_cliente'] !== ''): ?>
+            <button type="button" class="btn secondary use-latest-value" data-target="codice_cliente"
+                    data-value="<?= htmlspecialchars($latestTariIdentifiers['codice_cliente'], ENT_QUOTES) ?>"
+                    title="Inserisci <?= htmlspecialchars($latestTariIdentifiers['codice_cliente'], ENT_QUOTES) ?>">Usa più recente</button>
+          <?php endif; ?>
+        </div>
+      </div>
+      <div class="field">
+        <label>Codice Utenza/Contratto n.</label>
+        <div class="field-input-action">
+          <input type="text" name="codice_utenza" maxlength="100" value="<?= htmlspecialchars(post_string($_POST, 'codice_utenza')) ?>">
+          <?php if ($latestTariIdentifiers['codice_utenza'] !== ''): ?>
+            <button type="button" class="btn secondary use-latest-value" data-target="codice_utenza"
+                    data-value="<?= htmlspecialchars($latestTariIdentifiers['codice_utenza'], ENT_QUOTES) ?>"
+                    title="Inserisci <?= htmlspecialchars($latestTariIdentifiers['codice_utenza'], ENT_QUOTES) ?>">Usa più recente</button>
+          <?php endif; ?>
+        </div>
+      </div>
       <div class="field">
         <label>Tipo avviso</label>
         <select name="tipo_avviso">
@@ -423,6 +545,17 @@ if ($utilityCode === 'bonifica') {
       </div>
 
       <div class="field"><label>% Raccolta diff.</label><input type="number" step="0.1" name="raccolta_diff"></div>
+      <div class="field">
+        <label>Svuotature indifferenziato (20 l)</label>
+        <input type="number" name="svuotature_grigio" min="0" max="20" step="1"
+               value="<?= htmlspecialchars(post_string($_POST, 'svuotature_grigio', '0')) ?>">
+      </div>
+      <div class="field">
+        <label style="display:flex; align-items:center; gap:6px;">
+          <input type="checkbox" name="stima" value="1" <?= isset($_POST['stima']) ? 'checked' : '' ?>>
+          📊 Bolletta stimata (previsione)
+        </label>
+      </div>
     <?php endif; ?>
 
     <?php if ($utilityCode === 'acqua'): ?>
@@ -457,13 +590,13 @@ if ($utilityCode === 'bonifica') {
 
       <div class="field">
         <label>Prossima lettura dal</label>
-        <input type="date" name="next_reading_start"
-              value="<?= htmlspecialchars($_POST['next_reading_start'] ?? '') ?>">
+        <input type="text" inputmode="numeric" placeholder="gg/mm/aaaa" pattern="\d{2}/\d{2}/\d{4}" name="next_reading_start"
+              value="<?= htmlspecialchars(displayItalianDate($_POST['next_reading_start'] ?? '')) ?>">
       </div>
       <div class="field">
         <label>Prossima lettura al</label>
-        <input type="date" name="next_reading_end"
-              value="<?= htmlspecialchars($_POST['next_reading_end'] ?? '') ?>">
+        <input type="text" inputmode="numeric" placeholder="gg/mm/aaaa" pattern="\d{2}/\d{2}/\d{4}" name="next_reading_end"
+              value="<?= htmlspecialchars(displayItalianDate($_POST['next_reading_end'] ?? '')) ?>">
         <small class="muted">Periodo indicato in bolletta per comunicare l'autolettura</small>
       </div>
 
@@ -476,7 +609,7 @@ if ($utilityCode === 'bonifica') {
           ?>
           <?php foreach ($postDates as $i => $rDate): ?>
             <div class="reading-row" style="display:flex; gap:8px; margin-bottom:6px;">
-              <input type="date" name="reading_date[]" value="<?= htmlspecialchars($rDate) ?>">
+              <input type="text" inputmode="numeric" placeholder="gg/mm/aaaa" pattern="\d{2}/\d{2}/\d{4}" name="reading_date[]" value="<?= htmlspecialchars(displayItalianDate($rDate)) ?>">
               <input type="number" step="0.01" name="reading_value[]" placeholder="m³"
                      value="<?= htmlspecialchars($postValues[$i] ?? '') ?>">
               <button type="button" class="btn secondary remove-reading">✕</button>
@@ -499,17 +632,21 @@ if ($utilityCode === 'bonifica') {
       </div>
       <div class="field">
         <label>Data scadenza</label>
-        <input type="date" name="data_scadenza">
+        <input type="text" inputmode="numeric" placeholder="gg/mm/aaaa" pattern="\d{2}/\d{2}/\d{4}" name="data_scadenza" value="<?= htmlspecialchars(displayItalianDate($_POST['data_scadenza'] ?? '')) ?>">
       </div>
       <div class="field">
         <label>Data di pagamento</label>
-        <input type="date" name="data_pagamento">
+        <input type="text" inputmode="numeric" placeholder="gg/mm/aaaa" pattern="\d{2}/\d{2}/\d{4}" name="data_pagamento" value="<?= htmlspecialchars(displayItalianDate($_POST['data_pagamento'] ?? '')) ?>">
       </div>
     <?php endif; ?>
 
     <div class="field">
-      <label>Extra/Bonus (€)</label>
-      <input type="number" step="0.01" name="extra_adjust" value="0.00">
+      <label><?= $utilityCode === 'tari' ? 'Credito/rimborso utilizzato (€)' : 'Extra/Bonus (€)' ?></label>
+      <input type="number" step="0.01" <?= $utilityCode === 'tari' ? 'min="0" name="tari_credit"' : 'name="extra_adjust"' ?>
+             value="<?= htmlspecialchars($utilityCode === 'tari' ? post_string($_POST, 'tari_credit', '0.00') : post_string($_POST, 'extra_adjust', '0.00')) ?>">
+      <?php if ($utilityCode === 'tari'): ?>
+        <small class="muted">Inserisci il credito come valore positivo: sarà sottratto automaticamente dall'importo lordo.</small>
+      <?php endif; ?>
     </div>
     <div class="field wide">
       <label>Note</label>
@@ -528,6 +665,15 @@ if ($utilityCode === 'bonifica') {
 <script>
 document.addEventListener('DOMContentLoaded', () => {
 
+  document.querySelectorAll('.use-latest-value').forEach(button => {
+    button.addEventListener('click', () => {
+      const input = document.querySelector(`input[name="${button.dataset.target}"]`);
+      if (!input) return;
+      input.value = button.dataset.value || '';
+      input.focus();
+    });
+  });
+
   const yearBtns   = document.querySelectorAll('.year-btn');
   const monthBtns  = document.querySelectorAll('.month-btn');
   const startInput = document.querySelector('input[name="period_start"]');
@@ -535,7 +681,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const trimestreSel = document.getElementById('trimestre');
   const fatturaInput = document.querySelector('input[name="data_fattura"]');
 
-  let selectedYear  = <?= (int)$suggested_year ?>;
+  let selectedYear  = <?= $selectedFormYear ?>;
   let selectedMonth = <?= (int)$suggested_month ?>;
 
   const lIni = document.getElementById('l_ini');
@@ -606,7 +752,7 @@ if (addReadingBtn && readingsList) {
     row.className = 'reading-row';
     row.style.cssText = 'display:flex; gap:8px; margin-bottom:6px;';
     row.innerHTML = `
-      <input type="date" name="reading_date[]">
+      <input type="text" inputmode="numeric" placeholder="gg/mm/aaaa" pattern="\\d{2}/\\d{2}/\\d{4}" name="reading_date[]">
       <input type="number" step="0.01" name="reading_value[]" placeholder="m³">
       <button type="button" class="btn secondary remove-reading">✕</button>
     `;
@@ -624,8 +770,8 @@ const annoBonifica = document.getElementById('anno_bonifica');
 function updateBonificaPeriod() {
   if (!annoBonifica) return;
   const y = parseInt(annoBonifica.value, 10);
-  startInput.value = `${y}-01-01`;
-  endInput.value   = `${y}-12-31`;
+  startInput.value = `01/01/${y}`;
+  endInput.value   = `31/12/${y}`;
 }
 
 if (annoBonifica) {
@@ -642,7 +788,16 @@ if (annoBonifica) {
 
 
   function formatDate(d) {
-    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+    return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`;
+  }
+
+  function parseItalianDate(value) {
+    const match = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(value);
+    if (!match) return null;
+    const date = new Date(Number(match[3]), Number(match[2]) - 1, Number(match[1]));
+    return date.getFullYear() === Number(match[3])
+      && date.getMonth() === Number(match[2]) - 1
+      && date.getDate() === Number(match[1]) ? date : null;
   }
 
   function updateMonthDates() {
@@ -652,11 +807,23 @@ if (annoBonifica) {
     endInput.value   = formatDate(end);
   }
 
+  function updateQuarterDates() {
+    if (!trimestreSel || !trimestreSel.value) return;
+    const quarter = Number(trimestreSel.value.substring(1));
+    if (quarter < 1 || quarter > 4) return;
+    const startMonth = (quarter - 1) * 3;
+    const start = new Date(selectedYear, startMonth, 1);
+    const end = new Date(selectedYear, startMonth + 3, 0);
+    startInput.value = formatDate(start);
+    endInput.value = formatDate(end);
+    updateFatturaYear(selectedYear);
+  }
+
   function updateFatturaYear(newYear) {
     if (!fatturaInput || !fatturaInput.value) return;
 
-    const d = new Date(fatturaInput.value);
-    if (isNaN(d)) return;
+    const d = parseItalianDate(fatturaInput.value);
+    if (!d) return;
 
     d.setFullYear(newYear);
     fatturaInput.value = formatDate(d);
@@ -673,7 +840,11 @@ if (annoBonifica) {
       yearBtns.forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
       selectedYear = +btn.dataset.year;
-      updateMonthDates();
+      if (trimestreSel) {
+        updateQuarterDates();
+      } else {
+        updateMonthDates();
+      }
       updateFatturaYear(selectedYear);
     };
   });
@@ -692,37 +863,14 @@ if (annoBonifica) {
      TRIMESTRE TARI (CORRETTO)
      =========================== */
 if (trimestreSel && startInput && endInput) {
-
-  trimestreSel.addEventListener('change', () => {
-    if (!trimestreSel.value) return;
-
-    // anno preso dalla data "Dal"
-    const year = new Date(startInput.value || new Date()).getFullYear();
-    updateFatturaYear(year);
-    let startMonth = 0;
-    let endMonth   = 0;
-
-    switch (trimestreSel.value) {
-      case 'Q1': startMonth = 0; endMonth = 2; break;
-      case 'Q2': startMonth = 3; endMonth = 5; break;
-      case 'Q3': startMonth = 6; endMonth = 8; break;
-      case 'Q4': startMonth = 9; endMonth = 11; break;
-      default: return;
-    }
-
-    const start = new Date(year, startMonth, 1);
-    const end   = new Date(year, endMonth + 1, 0);
-
-    startInput.value = formatDate(start);
-    endInput.value   = formatDate(end);
-  });
-
-    // trigger automatico iniziale
-    trimestreSel.dispatchEvent(new Event('change'));
+    trimestreSel.addEventListener('change', updateQuarterDates);
+    updateQuarterDates();
   }
 
 });
 </script>
+
+<script src="assets/js/italian-date-picker.js?v=<?= filemtime('assets/js/italian-date-picker.js') ?>"></script>
 
 </body>
 </html>

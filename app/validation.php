@@ -32,7 +32,7 @@ function validate_bill_input(string $utilityCode, array $input): array
     } elseif ($end < $start) {
         $errors[] = 'La fine del periodo non può precedere l\'inizio.';
     }
-    if (!valid_iso_date($issue, true)) $errors[] = 'La data di immissione non è valida.';
+    if (!valid_iso_date($issue, true)) $errors[] = 'La data di scadenza non è valida.';
     if ($amount === '' || !is_numeric($amount) || (float)$amount < 0) {
         $errors[] = 'L\'importo deve essere un numero maggiore o uguale a zero.';
     }
@@ -102,12 +102,29 @@ function validate_bill_input(string $utilityCode, array $input): array
     }
 
     if ($utilityCode === 'tari') {
+        foreach (['codice_cliente' => 'codice utente/cliente', 'codice_utenza' => 'codice utenza/Contratto n.'] as $key => $label) {
+            if (strlen(post_string($input, $key)) > 100) {
+                $errors[] = "Il $label non può superare 100 caratteri.";
+            }
+        }
+        $credit = post_string($input, 'tari_credit', '0');
+        if ($credit === '' || !is_numeric($credit) || (float)$credit < 0) {
+            $errors[] = 'Il credito/rimborso TARI deve essere un numero maggiore o uguale a zero.';
+        } elseif (is_numeric($amount) && (float)$credit > (float)$amount) {
+            $errors[] = 'Il credito/rimborso TARI non può superare l\'importo lordo.';
+        }
         $percentage = post_string($input, 'raccolta_diff');
         if (is_numeric($percentage) && ((float)$percentage < 0 || (float)$percentage > 100)) {
             $errors[] = 'La raccolta differenziata deve essere compresa tra 0 e 100.';
         }
+        $grayBins = post_string($input, 'svuotature_grigio');
+        if ($grayBins !== '' && (!ctype_digit($grayBins) || (int)$grayBins > 20)) {
+            $errors[] = 'Le svuotature dell\'indifferenziato devono essere un numero intero tra 0 e 20.';
+        }
         $quarter = post_string($input, 'periodo_competenza');
-        if ($quarter !== '' && valid_iso_date($start) && valid_iso_date($end)) {
+        if ($quarter === '') {
+            $errors[] = 'Seleziona il trimestre TARI.';
+        } elseif (valid_iso_date($start) && valid_iso_date($end)) {
             if (!preg_match('/^Q([1-4])(?:\s+(\d{4}))?$/', $quarter, $match)) {
                 $errors[] = 'Il trimestre TARI non è valido.';
             } else {
