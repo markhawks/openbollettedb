@@ -249,7 +249,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 $stmt->execute([
   (int)$utility['id'],
-  $issue_date ?: date('Y-m-d'),
+  $issue_date ?: null,
   $period_start,
   $period_end,
   (float)$amount_total,
@@ -460,7 +460,7 @@ if ($utilityCode === 'bonifica') {
   <div class="form-inline">
 
     <div class="field">
-      <label>Data scadenza</label>
+      <label><?= $utilityCode === 'luce' ? 'Scadenza fattura' : 'Data scadenza' ?></label>
       <input type="text" inputmode="numeric" placeholder="gg/mm/aaaa" pattern="\d{2}/\d{2}/\d{4}"
             name="issue_date"
             value="<?= htmlspecialchars(displayItalianDate($_POST['issue_date'] ?? '')) ?>">

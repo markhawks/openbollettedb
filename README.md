@@ -6,7 +6,7 @@
 
 ![PHP](https://img.shields.io/badge/PHP-8.x-777BB4?logo=php&logoColor=white)
 ![Database](https://img.shields.io/badge/DB-SQLite-003B57?logo=sqlite&logoColor=white)
-![Versione](https://img.shields.io/badge/versione-v1.6.0-2563eb)
+![Versione](https://img.shields.io/badge/versione-v1.6.1-2563eb)
 ![Tested on](https://img.shields.io/badge/tested%20on-Fedora%2044-294172?logo=fedora&logoColor=white)
 [![License: AGPL v3+](https://img.shields.io/badge/license-AGPL--3.0--or--later-blue)](LICENSE)
 
@@ -27,6 +27,7 @@ domestiche (Luce, Gas, Acqua, TARI, Bonifica) in un database SQLite locale.
   evidenziate automaticamente in rosso.
 - Dashboard **Luce + Gas** con tutti gli anni disponibili visibili nel grafico, compresi quelli che
   contengono dati di una sola delle due utenze.
+- Scadenza della fattura Luce gestibile nei moduli e mostrata direttamente nello storico delle bollette.
 - Gestione **TARI trimestrale** con importo lordo, credito/rimborso, totale da pagare, data fattura e
   scadenza, numero avviso/fattura, codice utente/cliente e codice utenza/contratto. La percentuale di
   raccolta differenziata evidenzia le fasce tariffarie; le svuotature dell'indifferenziato da 20 litri

@@ -425,7 +425,7 @@ $tariDisplayCredit = $tariStoredAdjustment < 0 ? abs($tariStoredAdjustment) : 0;
       <div class="form-inline">
         
         <div class="field">
-          <label>Data scadenza</label>
+          <label><?= $utilityCode === 'luce' ? 'Scadenza fattura' : 'Data scadenza' ?></label>
           <input type="text" inputmode="numeric" placeholder="gg/mm/aaaa" pattern="\d{2}/\d{2}/\d{4}" name="issue_date"
                 value="<?= htmlspecialchars(displayItalianDate($bill['issue_date'] ?? '')) ?>">
         </div>

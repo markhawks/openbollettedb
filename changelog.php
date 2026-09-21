@@ -4,6 +4,15 @@ declare(strict_types=1);
 /* Storico versioni: aggiungere una nuova voce in cima ad ogni rilascio */
 $release = [
   [
+    'version' => 'v1.6.1',
+    'date'    => '21/09/2026',
+    'changes' => [
+      'Aggiunta la Scadenza fattura alla gestione Luce: il campo è disponibile in Nuova e Modifica bolletta e viene mostrato nello storico subito dopo l\'importo.',
+      'La scadenza usa il calendario con formato italiano gg/mm/aaaa già presente nei moduli.',
+      'Corretto il salvataggio delle nuove bollette senza scadenza: il valore rimane vuoto e non viene più sostituito automaticamente con la data odierna.',
+    ],
+  ],
+  [
     'version' => 'v1.6.0',
     'date'    => '08/09/2026',
     'changes' => [

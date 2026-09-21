@@ -6,7 +6,7 @@
 
 ![PHP](https://img.shields.io/badge/PHP-8.x-777BB4?logo=php&logoColor=white)
 ![Database](https://img.shields.io/badge/DB-SQLite-003B57?logo=sqlite&logoColor=white)
-![Version](https://img.shields.io/badge/version-v1.6.0-2563eb)
+![Version](https://img.shields.io/badge/version-v1.6.1-2563eb)
 ![Tested on](https://img.shields.io/badge/tested%20on-Fedora%2044-294172?logo=fedora&logoColor=white)
 [![License: AGPL v3+](https://img.shields.io/badge/license-AGPL--3.0--or--later-blue)](LICENSE)
 
@@ -26,6 +26,7 @@ A small PHP application with no framework or package manager, for tracking house
 - Water self-reading window displayed in the table; future dates are automatically highlighted in
   red with a reminder bell.
 - **Electricity + Gas** chart shows every available year, including years containing only one utility.
+- Electricity invoice due dates can be managed in the forms and are shown directly in bill history.
 - **Quarterly TARI** management with gross amount, applied credit/refund, amount due, invoice and due
   dates, notice/invoice number, user/customer code, and utility/contract number. Recycling percentages
   highlight the applicable rate band, while 20-litre residual-waste emptyings are represented by bin

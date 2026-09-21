@@ -191,6 +191,7 @@ function luceGrowthBadge(array $crescita, string $label, string $unit): string {
         <th class="right">Canone</th>
         <th class="right">Extra</th>
         <th class="right">Importo</th>
+        <th>Scadenza fattura</th>
         <th class="right">€/kWh</th>
         <th>Note</th>
         <th style="text-align:center;">Azioni</th>
@@ -242,6 +243,11 @@ foreach ($bills as $b):
     </td>
     <td class="right">
       <strong>€ <?= number_format((float)$b['amount_total'],2,',','.') ?></strong>
+    </td>
+    <td class="muted">
+      <?= !empty($b['issue_date'])
+        ? date('d/m/Y', strtotime((string)$b['issue_date']))
+        : '—' ?>
     </td>
     <td class="right">
       <?= $media ? '€ '.number_format($media,3,',','.') : '-' ?>
