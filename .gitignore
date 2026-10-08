@@ -5,3 +5,7 @@
 .env
 .DS_Store
 token
+
+# Bollette PDF locali: la struttura resta versionata, i documenti e i log no.
+/data/imports/**/*.pdf
+/data/imports/**/errori/*.txt

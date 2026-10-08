@@ -6,7 +6,7 @@
 
 ![PHP](https://img.shields.io/badge/PHP-8.x-777BB4?logo=php&logoColor=white)
 ![Database](https://img.shields.io/badge/DB-SQLite-003B57?logo=sqlite&logoColor=white)
-![Versione](https://img.shields.io/badge/versione-v1.6.1-2563eb)
+![Versione](https://img.shields.io/badge/versione-v1.7.0-2563eb)
 ![Tested on](https://img.shields.io/badge/tested%20on-Fedora%2044-294172?logo=fedora&logoColor=white)
 [![License: AGPL v3+](https://img.shields.io/badge/license-AGPL--3.0--or--later-blue)](LICENSE)
 
@@ -28,6 +28,12 @@ domestiche (Luce, Gas, Acqua, TARI, Bonifica) in un database SQLite locale.
 - Dashboard **Luce + Gas** con tutti gli anni disponibili visibili nel grafico, compresi quelli che
   contengono dati di una sola delle due utenze.
 - Scadenza della fattura Luce gestibile nei moduli e mostrata direttamente nello storico delle bollette.
+- Importazione assistita da PDF delle bollette Luce **Octopus Energy**, con anteprima, confronto con
+  i dati esistenti, conferma prima della sovrascrittura, controllo dei duplicati e archiviazione per
+  utenza/anno. Il nome del PDF rimane visibile nello storico.
+- Estrazione automatica di Canone RAI, consumo reale, quantità fatturata, perdite di rete e relativo
+  costo. La dashboard distingue le perdite separate da quelle incluse nel consumo o nel prezzo e ne
+  mostra i totali annuali; l'ultima quota reale del Canone RAI diventa il valore predefinito futuro.
 - Gestione **TARI trimestrale** con importo lordo, credito/rimborso, totale da pagare, data fattura e
   scadenza, numero avviso/fattura, codice utente/cliente e codice utenza/contratto. La percentuale di
   raccolta differenziata evidenzia le fasce tariffarie; le svuotature dell'indifferenziato da 20 litri
@@ -83,8 +89,8 @@ cd OpenBolletteDB
 
 # 5. Permessi: php-fpm su Fedora gira come utente/gruppo "apache" e deve poter scrivere
 #    nella cartella data/ (il database SQLite e i file -wal/-shm di WAL mode)
-sudo chgrp apache data
-sudo chmod 770 data
+sudo chgrp -R apache data
+sudo find data -type d -exec chmod 2770 {} +
 sudo find data -maxdepth 1 -type f -name '*.sqlite*' -exec chmod 660 {} +
 
 # 6. Schema del database (+ opzionale: dati di esempio)
@@ -140,6 +146,42 @@ php -S localhost:8000 -t .        # avvia il server di sviluppo
 
 Apri `http://localhost:8000/`.
 
+## Importazione PDF Octopus Energy
+
+L'importazione automatica iniziale supporta esclusivamente bollette PDF **Luce** di **Octopus Energy**
+che contengono testo selezionabile. Installa prima `pdftotext`:
+
+```bash
+sudo dnf install -y poppler-utils
+```
+
+Il metodo consigliato è il pulsante **📄 Importa PDF** nella dashboard Luce. L'interfaccia mostra
+prima il confronto tra PDF e bolletta eventualmente già presente e richiede una conferma esplicita
+prima di sovrascrivere. Il confronto comprende anche il **Canone RAI**: quando presente nel PDF viene
+salvato e la quota reale più recente diventa il valore predefinito delle nuove bollette Luce. Se il
+PDF non riporta il canone, il valore già registrato non viene modificato. Le note e le altre metriche
+manuali non presenti nel PDF vengono conservate; il nome del documento appare nella colonna **Importate**.
+L'importatore rileva inoltre consumo reale, quantità fatturata comprensiva delle perdite, perdite di
+rete in kWh e relativo costo, distinguendo le perdite addebitate separatamente da quelle incluse nel
+consumo fatturato o nel prezzo unitario.
+
+In alternativa, i documenti possono essere inseriti in `data/imports/luce/<anno>/da_elaborare/` e
+gestiti da CLI. Per creare le cartelle di un nuovo anno, analizzare i PDF e confermare l'inserimento:
+
+```bash
+php app/import_octopus.php --year=2027 --prepare
+php app/import_octopus.php --year=2027
+php app/import_octopus.php --year=2027 --commit
+```
+
+Senza `--commit` viene mostrata soltanto l'anteprima. Il comando importa un documento solo quando
+riconosce Octopus, periodo, totale e kWh; usa l'hash del PDF e i controlli mensili esistenti per evitare
+duplicati. Dopo il salvataggio il PDF passa in `importate/`; i problemi vengono descritti in `errori/`.
+Una bolletta reale può sostituire automaticamente una stima dello stesso mese, ma non sovrascrive mai
+una registrazione già reale.
+Le scansioni prive di testo richiedono OCR e per ora non sono supportate. Vedi anche
+[`data/imports/README.md`](data/imports/README.md).
+
 `seed_demo.php` inserisce circa due anni di bollette fittizie per ogni utenza, così l'app non parte
 vuota alla prima installazione: è un modo pratico per vedere subito grafici, riepiloghi e stime
 compilati, e per capire come strutturare le proprie bollette reali. Non fa nulla (e non tocca dati
@@ -160,6 +202,7 @@ e ripartire con i propri dati reali.
 - `app/db.php` — connessione PDO/SQLite condivisa
 - `app/migrate.php` — schema del database (incluso l'utente predefinito) e seed delle utenze
 - `app/seed_demo.php` — genera bollette di esempio per la prima installazione (dati inventati)
+- `app/import_octopus.php` — anteprima e importazione CLI delle bollette PDF Luce Octopus Energy
 - `app/csrf.php` — token di sessione usato per proteggere tutte le operazioni di scrittura
 - `app/validation.php` — validazione centralizzata di date, intervalli, importi e campi delle utenze
 - `changelog.php` — note di rilascio, raggiungibile dall'icona 📝 nell'header

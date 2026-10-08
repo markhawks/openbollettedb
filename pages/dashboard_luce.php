@@ -26,7 +26,13 @@ $stmt = $pdo->prepare("
          m3.value AS extra_adjust,
          m4.value AS energy_price,
          m5.value AS commercial_fee,
-         m6.value AS stima
+         m6.value AS stima,
+         m7.value AS import_source_file,
+         m8.value AS physical_kwh,
+         m9.value AS grid_losses_kwh,
+         m10.value AS grid_losses_cost,
+         m11.value AS grid_losses_mode,
+         m12.value AS billed_kwh
   FROM bills b
   LEFT JOIN bill_metrics m1 ON b.id = m1.bill_id AND m1.key = 'kwh'
   LEFT JOIN bill_metrics m2 ON b.id = m2.bill_id AND m2.key = 'canone_rai'
@@ -34,6 +40,12 @@ $stmt = $pdo->prepare("
   LEFT JOIN bill_metrics m4 ON b.id = m4.bill_id AND m4.key = 'energy_price'
   LEFT JOIN bill_metrics m5 ON b.id = m5.bill_id AND m5.key = 'commercial_fee'
   LEFT JOIN bill_metrics m6 ON b.id = m6.bill_id AND m6.key = 'stima'
+  LEFT JOIN bill_metrics m7 ON b.id = m7.bill_id AND m7.key = 'import_source_file'
+  LEFT JOIN bill_metrics m8 ON b.id = m8.bill_id AND m8.key = 'physical_kwh'
+  LEFT JOIN bill_metrics m9 ON b.id = m9.bill_id AND m9.key = 'grid_losses_kwh'
+  LEFT JOIN bill_metrics m10 ON b.id = m10.bill_id AND m10.key = 'grid_losses_cost'
+  LEFT JOIN bill_metrics m11 ON b.id = m11.bill_id AND m11.key = 'grid_losses_mode'
+  LEFT JOIN bill_metrics m12 ON b.id = m12.bill_id AND m12.key = 'billed_kwh'
   WHERE b.utility_id = ?
   ORDER BY anno DESC, mese_num DESC
 ");
@@ -76,6 +88,22 @@ $sumStmt = $pdo->prepare("
         AND m.key = 'kwh'
         AND b2.utility_id = ?
     ) AS total_kwh,
+    (
+      SELECT SUM(value)
+      FROM bill_metrics m
+      JOIN bills b2 ON m.bill_id = b2.id
+      WHERE strftime('%Y', b2.period_start) = strftime('%Y', b.period_start)
+        AND m.key = 'grid_losses_kwh'
+        AND b2.utility_id = ?
+    ) AS total_losses_kwh,
+    (
+      SELECT SUM(value)
+      FROM bill_metrics m
+      JOIN bills b2 ON m.bill_id = b2.id
+      WHERE strftime('%Y', b2.period_start) = strftime('%Y', b.period_start)
+        AND m.key = 'grid_losses_cost'
+        AND b2.utility_id = ?
+    ) AS total_losses_cost,
     SUM(CASE WHEN EXISTS (
       SELECT 1 FROM bill_metrics sm
       WHERE sm.bill_id = b.id AND sm.key = 'stima' AND sm.value = 1
@@ -90,7 +118,7 @@ $sumStmt = $pdo->prepare("
   ORDER BY year DESC
 ");
 
-$sumStmt->execute([$utilityId, $utilityId, $utilityId, $utilityId]);
+$sumStmt->execute([$utilityId, $utilityId, $utilityId, $utilityId, $utilityId, $utilityId]);
 $yearTotals = $sumStmt->fetchAll(PDO::FETCH_ASSOC);
 
 $mesiItaliani = [
@@ -137,7 +165,10 @@ function luceGrowthBadge(array $crescita, string $label, string $unit): string {
     <div class="sub">Storico consumi e costi</div>
   </div>
   <?php if (is_admin()): ?>
-  <a class="btn" href="new_bill.php?u=luce">+ Nuova bolletta</a>
+  <div class="dashboard-actions">
+    <a class="btn secondary" href="import_bill.php">📄 Importa PDF</a>
+    <a class="btn" href="new_bill.php?u=luce">+ Nuova bolletta</a>
+  </div>
   <?php endif; ?>
 </header>
 
@@ -185,13 +216,17 @@ function luceGrowthBadge(array $crescita, string $label, string $unit): string {
         <th class="muted">#</th>
         <th>Mese</th>
         <th>Periodo</th>
-        <th class="right">kWh</th>
+        <th class="right">kWh fatt.</th>
+        <th class="right">kWh reali</th>
+        <th class="right">kWh Perdite</th>
+        <th class="right">Costo perdite €</th>
         <th class="right">Materia €/kWh</th>
         <th class="right">Comm. €/mese</th>
-        <th class="right">Canone</th>
+        <th class="right">Canone €</th>
         <th class="right">Extra</th>
         <th class="right">Importo</th>
         <th>Scadenza fattura</th>
+        <th>Importate</th>
         <th class="right">€/kWh</th>
         <th>Note</th>
         <th style="text-align:center;">Azioni</th>
@@ -227,30 +262,48 @@ foreach ($bills as $b):
       <?= date('d/m/Y', strtotime($b['period_end'])) ?>
     </td>
     <td class="right">
-      <?= $b['kwh'] ? number_format((float)$b['kwh'], 0, ',', '.') : '-' ?>
+      <?= $b['billed_kwh'] !== null ? number_format((float)$b['billed_kwh'], 1, ',', '.') : '-' ?>
     </td>
     <td class="right">
-      <?= $hasEnergyPrice ? '€ '.number_format($energyPrice, 4, ',', '.') : '-' ?>
+      <?= $b['physical_kwh'] !== null ? number_format((float)$b['physical_kwh'], 0, ',', '.') : '-' ?>
+    </td>
+    <td class="right" title="<?= htmlspecialchars([
+      'separate' => 'Perdite addebitate separatamente',
+      'incluse_consumo' => 'Perdite incluse nel consumo fatturato',
+      'incluse_prezzo' => 'Perdite incorporate nel prezzo unitario',
+    ][(string)($b['grid_losses_mode'] ?? '')] ?? '') ?>">
+      <?= $b['grid_losses_kwh'] !== null ? number_format((float)$b['grid_losses_kwh'], 1, ',', '.') : '-' ?>
     </td>
     <td class="right">
-      <?= $hasCommFee ? '€ '.number_format($commFee, 2, ',', '.') : '-' ?>
+      <?= $b['grid_losses_cost'] !== null ? number_format((float)$b['grid_losses_cost'], 2, ',', '.') : '-' ?>
+    </td>
+    <td class="right">
+      <?= $hasEnergyPrice ? number_format($energyPrice, 4, ',', '.') : '-' ?>
+    </td>
+    <td class="right">
+      <?= $hasCommFee ? number_format($commFee, 2, ',', '.') : '-' ?>
     </td>
     <td class="right" style="color:#d63384;">
-      <?= $canone != 0 ? '€ '.number_format($canone,2,',','.') : '-' ?>
+      <?= $canone != 0 ? number_format($canone,2,',','.') : '-' ?>
     </td>
     <td class="right" style="color: <?= $extra < 0 ? '#16a34a' : '#ea580c' ?>;">
       <?= $extra != 0 ? '€ '.number_format($extra,2,',','.') : '-' ?>
     </td>
     <td class="right">
-      <strong>€ <?= number_format((float)$b['amount_total'],2,',','.') ?></strong>
+      <strong><?= number_format((float)$b['amount_total'],2,',','.') ?></strong>
     </td>
     <td class="muted">
       <?= !empty($b['issue_date'])
         ? date('d/m/Y', strtotime((string)$b['issue_date']))
         : '—' ?>
     </td>
+    <td class="muted imported-file-cell" title="<?= htmlspecialchars((string)($b['import_source_file'] ?? '')) ?>">
+      <?= !empty($b['import_source_file'])
+        ? htmlspecialchars((string)$b['import_source_file'])
+        : '—' ?>
+    </td>
     <td class="right">
-      <?= $media ? '€ '.number_format($media,3,',','.') : '-' ?>
+      <?= $media ? number_format($media,3,',','.') : '-' ?>
     </td>
     <td class="muted"><?= htmlspecialchars($b['notes'] ?? '') ?></td>
     <td style="text-align:center; white-space: nowrap;">
@@ -293,6 +346,8 @@ foreach ($bills as $b):
       $canoneTot = (float)$yt['total_canone'];
       $extraTot  = (float)$yt['total_extra'];
       $kwhTot    = (float)$yt['total_kwh'];
+      $lossesKwhTot = (float)$yt['total_losses_kwh'];
+      $lossesCostTot = (float)$yt['total_losses_cost'];
       $totale    = (float)$yt['total_complessivo'];
       $stimaTot  = (float)$yt['total_stima'];
       $realeTot  = (float)$yt['total_reale'];
@@ -316,6 +371,12 @@ foreach ($bills as $b):
                          border-radius:10px; font-size:0.8rem; color:#475569;">
               Consumo: <?= number_format($kwhTot,0,',','.') ?> kWh
             </span>
+            <?php if ($lossesKwhTot > 0): ?>
+            <span style="margin-left:6px; padding:2px 8px; background:#fff7ed;
+                         border-radius:10px; font-size:0.8rem; color:#9a3412;">
+              Perdite: <?= number_format($lossesKwhTot,1,',','.') ?> kWh · € <?= number_format($lossesCostTot,2,',','.') ?>
+            </span>
+            <?php endif; ?>
           </span>
           <span style="font-size:1.1rem;">
             <strong>€ <?= number_format($totale,2,',','.') ?></strong>

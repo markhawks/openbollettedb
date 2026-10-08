@@ -4,6 +4,21 @@ declare(strict_types=1);
 /* Storico versioni: aggiungere una nuova voce in cima ad ogni rilascio */
 $release = [
   [
+    'version' => 'v1.7.0',
+    'date'    => '08/10/2026',
+    'changes' => [
+      'Aggiunta l’importazione assistita delle bollette PDF Luce di Octopus Energy direttamente dall’interfaccia grafica, con validazione del documento, anteprima e archiviazione per anno.',
+      'Quando esiste già una bolletta dello stesso mese, l’importatore confronta i dati e richiede una conferma esplicita prima della sovrascrittura; note e metriche manuali non presenti nel PDF vengono conservate.',
+      'La dashboard Luce mostra il nome del documento sorgente nella nuova colonna Importate.',
+      'Il Canone RAI viene estratto e confrontato automaticamente; se cambia, la quota reale più recente diventa il valore predefinito per le nuove bollette Luce.',
+      'Aggiunta l’analisi delle perdite di rete: consumo reale, quantità fatturata, perdite in kWh, costo e modalità di applicazione sono distinti per ogni mese.',
+      'Riconosciute sia le perdite addebitate separatamente sia quelle incluse nel consumo fatturato o incorporate nel prezzo unitario; il riepilogo Luce mostra i totali annuali delle perdite.',
+      'Corretta la distinzione fra consumo reale e quantità fatturata: per esempio gennaio 2026 registra 311 kWh reali, 31 kWh di perdite e 342 kWh fatturati.',
+      'Uniformata la tabella Luce indicando le unità di misura nelle intestazioni e alleggerendo i valori numerici ripetuti nelle celle.',
+      'Aggiunti il comando CLI per l’importazione Octopus, la struttura protetta delle cartelle locali e la documentazione completa in italiano e inglese.',
+    ],
+  ],
+  [
     'version' => 'v1.6.1',
     'date'    => '21/09/2026',
     'changes' => [

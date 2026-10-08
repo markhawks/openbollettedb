@@ -48,6 +48,20 @@ body {
   margin-bottom: 20px;
 }
 
+.dashboard-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.imported-file-cell {
+  max-width: 220px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 h1 { margin: 0; font-size: 24px; }
 .sub { color: #667; font-size: 14px; }
 

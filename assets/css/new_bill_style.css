@@ -238,6 +238,44 @@ th {
   text-align: right;
 }
 
+/* Importazione PDF Octopus */
+.import-container { max-width: 1180px; }
+.import-upload-form { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+.import-drop-zone {
+  display: flex;
+  flex: 1 1 500px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 18px;
+  border: 2px dashed #93c5fd;
+  border-radius: 12px;
+  background: #eff6ff;
+  color: #1e3a8a;
+  font-weight: 700;
+  cursor: pointer;
+}
+.import-drop-zone input { max-width: 280px; background: #fff; }
+.import-errors { border-left: 5px solid #dc2626; background: #fef2f2; color: #991b1b; }
+.import-success { border-left: 5px solid #16a34a; background: #f0fdf4; color: #166534; }
+.import-warning, .import-new, .import-preserve-note { padding: 12px; border-radius: 10px; margin: 12px 0; }
+.import-warning { background: #fff7ed; color: #9a3412; border: 1px solid #fed7aa; }
+.import-new { background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; }
+.import-preserve-note { background: #f8fafc; color: #475569; border: 1px solid #e2e8f0; }
+.import-comparison-wrap { overflow-x: auto; }
+.import-comparison { min-width: 760px; }
+.import-comparison th:first-child { width: 180px; }
+.import-comparison .import-different { background: #fff7ed; }
+.import-comparison .import-same { background: #f0fdf4; }
+.import-confirm-actions { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: end; gap: 16px; }
+.import-confirm-form { display: flex; flex: 1 1 520px; justify-content: flex-end; align-items: center; gap: 14px; }
+.import-overwrite-confirm { display: flex; align-items: flex-start; gap: 8px; max-width: 580px; color: #9a3412; font-weight: 700; }
+.import-overwrite-confirm input { width: auto; margin-top: 2px; }
+@media (max-width: 700px) {
+  .import-drop-zone, .import-confirm-form { align-items: stretch; flex-direction: column; }
+  .import-confirm-form .btn { width: 100%; }
+}
+
 .muted {
   color: #778;
 }

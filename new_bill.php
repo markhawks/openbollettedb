@@ -62,6 +62,29 @@ $utility = $utStmt->fetch(PDO::FETCH_ASSOC);
 
 if (!$utility) { http_response_code(404); die("Utenza non trovata"); }
 
+// Per le nuove bollette Luce riutilizza l'ultima rata reale del Canone RAI.
+// Se il PDF di una bolletta futura rileva una quota diversa, questa diventa
+// automaticamente il nuovo valore proposto (il canone resta escluso da novembre).
+if ($utilityCode === 'luce' && (int)$suggested_month <= 10) {
+  $latestCanoneStmt = $pdo->prepare("
+    SELECT CAST(m.value AS REAL)
+    FROM bill_metrics m
+    JOIN bills b ON b.id = m.bill_id
+    WHERE b.utility_id = ?
+      AND m.key = 'canone_rai'
+      AND CAST(m.value AS REAL) > 0
+      AND NOT EXISTS (
+        SELECT 1 FROM bill_metrics s
+        WHERE s.bill_id = b.id AND s.key = 'stima' AND CAST(s.value AS TEXT) = '1'
+      )
+    ORDER BY b.period_end DESC, b.id DESC
+    LIMIT 1
+  ");
+  $latestCanoneStmt->execute([(int)$utility['id']]);
+  $latestCanone = $latestCanoneStmt->fetchColumn();
+  if ($latestCanone !== false) $valore_canone = (float)$latestCanone;
+}
+
 $latestTariIdentifiers = ['codice_cliente' => '', 'codice_utenza' => ''];
 if ($utilityCode === 'tari') {
   $latestIdentifiersStmt = $pdo->prepare("

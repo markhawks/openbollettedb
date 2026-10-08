@@ -6,7 +6,7 @@
 
 ![PHP](https://img.shields.io/badge/PHP-8.x-777BB4?logo=php&logoColor=white)
 ![Database](https://img.shields.io/badge/DB-SQLite-003B57?logo=sqlite&logoColor=white)
-![Version](https://img.shields.io/badge/version-v1.6.1-2563eb)
+![Version](https://img.shields.io/badge/version-v1.7.0-2563eb)
 ![Tested on](https://img.shields.io/badge/tested%20on-Fedora%2044-294172?logo=fedora&logoColor=white)
 [![License: AGPL v3+](https://img.shields.io/badge/license-AGPL--3.0--or--later-blue)](LICENSE)
 
@@ -27,6 +27,12 @@ A small PHP application with no framework or package manager, for tracking house
   red with a reminder bell.
 - **Electricity + Gas** chart shows every available year, including years containing only one utility.
 - Electricity invoice due dates can be managed in the forms and are shown directly in bill history.
+- Assisted PDF import for **Octopus Energy** electricity bills, with preview, comparison against
+  existing data, confirmation before overwriting, duplicate checks, and utility/year-based archiving.
+  The source PDF filename remains visible in bill history.
+- Automatic extraction of the Italian TV licence fee, actual consumption, billed quantity, grid
+  losses and their cost. The dashboard distinguishes separately charged losses from losses included
+  in consumption or price and shows annual totals; the latest real TV fee becomes the future default.
 - **Quarterly TARI** management with gross amount, applied credit/refund, amount due, invoice and due
   dates, notice/invoice number, user/customer code, and utility/contract number. Recycling percentages
   highlight the applicable rate band, while 20-litre residual-waste emptyings are represented by bin
@@ -72,8 +78,8 @@ cd /var/www/html
 sudo git clone https://github.com/markhawks/openbollettedb.git OpenBolletteDB
 cd OpenBolletteDB
 
-sudo chgrp apache data
-sudo chmod 770 data
+sudo chgrp -R apache data
+sudo find data -type d -exec chmod 2770 {} +
 sudo find data -maxdepth 1 -type f -name '*.sqlite*' -exec chmod 660 {} +
 
 php app/migrate.php
@@ -124,6 +130,35 @@ php -S localhost:8000 -t .
 Then open `http://localhost:8000/`. The demo seeder never changes a database that already contains
 bills.
 
+## Octopus Energy PDF import
+
+The initial automatic importer supports text-based **Octopus Energy electricity** PDF bills only.
+Install `pdftotext` first (`sudo dnf install -y poppler-utils` on Fedora). The recommended workflow is
+the **📄 Import PDF** button in the Electricity dashboard: it previews differences against an existing
+bill and requires explicit confirmation before overwriting. The comparison also includes the **Italian
+TV licence fee (Canone RAI)**: when present in the PDF it is stored, and the latest real fee becomes the
+default for new electricity bills. If the PDF does not list it, the existing value is preserved. Notes
+and other manual metrics missing from the PDF are preserved, while the source filename appears in the
+**Imported** column.
+The importer also extracts actual consumption, the billed quantity including losses, grid losses in kWh
+and their cost, distinguishing losses charged separately from those included in billed consumption or
+incorporated into the unit price.
+
+Alternatively, place documents in `data/imports/luce/<year>/da_elaborare/` and run:
+
+```bash
+php app/import_octopus.php --year=2027 --prepare
+php app/import_octopus.php --year=2027
+php app/import_octopus.php --year=2027 --commit
+```
+
+Without `--commit`, the command only previews extracted data. A document is imported only when the
+provider, billing period, total, and kWh are recognized. PDF hashes and existing monthly checks block
+duplicates. Successfully imported documents are moved to `importate/`, while diagnostics are written
+to `errori/`. A real bill may automatically replace an estimate for the same month, but an existing
+real record is never overwritten. Image-only scans require OCR and are not currently supported. See
+[`data/imports/README.md`](data/imports/README.md).
+
 ## Default account
 
 - Username: `admin`
@@ -158,6 +193,7 @@ configuration before exposing it to the Internet.
 - `app/validation.php` — central input validation
 - `app/migrate.php` — database schema and migrations
 - `app/seed_demo.php` — optional fictional demo records
+- `app/import_octopus.php` — CLI preview/import for Octopus Energy electricity PDF bills
 - `changelog.php` — built-in release notes
 
 See `CLAUDE.md` for internal architecture and data-model conventions.
