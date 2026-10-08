@@ -6,7 +6,7 @@
 
 ![PHP](https://img.shields.io/badge/PHP-8.x-777BB4?logo=php&logoColor=white)
 ![Database](https://img.shields.io/badge/DB-SQLite-003B57?logo=sqlite&logoColor=white)
-![Versione](https://img.shields.io/badge/versione-v1.7.0-2563eb)
+![Versione](https://img.shields.io/badge/versione-v1.7.1-2563eb)
 ![Tested on](https://img.shields.io/badge/tested%20on-Fedora%2044-294172?logo=fedora&logoColor=white)
 [![License: AGPL v3+](https://img.shields.io/badge/license-AGPL--3.0--or--later-blue)](LICENSE)
 
@@ -148,8 +148,10 @@ Apri `http://localhost:8000/`.
 
 ## Importazione PDF Octopus Energy
 
-L'importazione automatica iniziale supporta esclusivamente bollette PDF **Luce** di **Octopus Energy**
-che contengono testo selezionabile. Installa prima `pdftotext`:
+L'importazione automatica supporta esclusivamente bollette PDF **Luce** di **Octopus Energy** che
+contengono testo selezionabile. Sono riconosciuti sia il vecchio layout utilizzato almeno fino a
+maggio 2025, compresi i documenti con ricalcoli di mesi precedenti, sia il layout successivo.
+Installa prima `pdftotext`:
 
 ```bash
 sudo dnf install -y poppler-utils

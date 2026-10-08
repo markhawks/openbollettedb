@@ -6,7 +6,7 @@
 
 ![PHP](https://img.shields.io/badge/PHP-8.x-777BB4?logo=php&logoColor=white)
 ![Database](https://img.shields.io/badge/DB-SQLite-003B57?logo=sqlite&logoColor=white)
-![Version](https://img.shields.io/badge/version-v1.7.0-2563eb)
+![Version](https://img.shields.io/badge/version-v1.7.1-2563eb)
 ![Tested on](https://img.shields.io/badge/tested%20on-Fedora%2044-294172?logo=fedora&logoColor=white)
 [![License: AGPL v3+](https://img.shields.io/badge/license-AGPL--3.0--or--later-blue)](LICENSE)
 
@@ -132,8 +132,9 @@ bills.
 
 ## Octopus Energy PDF import
 
-The initial automatic importer supports text-based **Octopus Energy electricity** PDF bills only.
-Install `pdftotext` first (`sudo dnf install -y poppler-utils` on Fedora). The recommended workflow is
+The automatic importer supports text-based **Octopus Energy electricity** PDF bills only. It handles
+both the old layout used at least through May 2025—including documents containing previous-month
+recalculations—and the newer layout. Install `pdftotext` first (`sudo dnf install -y poppler-utils` on Fedora). The recommended workflow is
 the **📄 Import PDF** button in the Electricity dashboard: it previews differences against an existing
 bill and requires explicit confirmation before overwriting. The comparison also includes the **Italian
 TV licence fee (Canone RAI)**: when present in the PDF it is stored, and the latest real fee becomes the

@@ -72,6 +72,7 @@ function parseOctopusElectricityText(string $text, string $sourceName): array
         '/data\s+fattura\s*:?\s*' . $date . '/iu',
     ]);
     $amountRaw = octopusFirstMatch($compact, [
+        '/totale\s+importo\s+da\s+pagare\s*:?[\s€]*([0-9.]+,[0-9]{2})/iu',
         '/totale\s+(?:fattura\s+)?da\s+pagare\s*:?\s*(?:€\s*)?([0-9.]+,[0-9]{2})/iu',
         '/importo\s+totale\s*:?\s*(?:€\s*)?([0-9.]+,[0-9]{2})/iu',
     ]);
@@ -79,10 +80,24 @@ function parseOctopusElectricityText(string $text, string $sourceName): array
         '/consumo\s+(?:totale|fatturato|del\s+periodo)\s*:?\s*([0-9.]+(?:,[0-9]+)?)\s*kWh/iu',
         '/totale\s+consumi\s*:?\s*([0-9.]+(?:,[0-9]+)?)\s*kWh/iu',
     ]);
+    // Il vecchio layout può contenere prima i ricalcoli di mesi precedenti.
+    // Cerca l'ultimo blocco di dettaglio con lo stesso periodo del quadro
+    // principale, così Energia e Perdite appartengono al mese importato.
+    $detailText = $compact;
+    if ($periodStart !== null && $periodEnd !== null
+        && preg_match_all('/periodo\s+(?:di\s+)?(?:fornitura|fatturazione|riferimento)\s*:?\s*(?:dal\s+)?' . $date . '\s*(?:al|–|—|-)\s*' . $date . '/iu', $compact, $periodMatches, PREG_SET_ORDER | PREG_OFFSET_CAPTURE)) {
+        foreach ($periodMatches as $periodMatch) {
+            if (octopusParseItalianDate($periodMatch[1][0]) === $periodStart
+                && octopusParseItalianDate($periodMatch[2][0]) === $periodEnd) {
+                $detailText = substr($compact, (int)$periodMatch[0][1]);
+            }
+        }
+    }
+
     $energyDetail = [];
-    preg_match('/^\s*Energia\s+([0-9.]+(?:,[0-9]+)?)\s+([0-9.]+,[0-9]+)\s*€\/kWh\s+([0-9.]+,[0-9]{2})\s*€/imu', $compact, $energyDetail);
+    preg_match('/^\s*Energia\s+([0-9.]+(?:,[0-9]+)?)\s+([0-9.]+,[0-9]+)\s*€\/kWh\s+([0-9.]+,[0-9]{2})\s*€/imu', $detailText, $energyDetail);
     $lossDetail = [];
-    preg_match('/^\s*Perdite\s+([0-9.]+(?:,[0-9]+)?)\s+([0-9.]+,[0-9]+)\s*€\/kWh\s+([0-9.]+,[0-9]{2})\s*€/imu', $compact, $lossDetail);
+    preg_match('/^\s*Perdite\s+([0-9.]+(?:,[0-9]+)?)\s+([0-9.]+,[0-9]+)\s*€\/kWh\s+([0-9.]+,[0-9]{2})\s*€/imu', $detailText, $lossDetail);
 
     $energyKwh = isset($energyDetail[1]) ? octopusParseDecimal($energyDetail[1]) : null;
     $energyUnitPrice = isset($energyDetail[2]) ? octopusParseDecimal($energyDetail[2]) : null;
@@ -109,6 +124,7 @@ function parseOctopusElectricityText(string $text, string $sourceName): array
         '/numero\s+fattura\s+elettronica\s+valida\s+ai\s+fini\s+fiscali\s*:?\s*([A-Z0-9][A-Z0-9._\/-]+)/iu',
         '/(?:fattura|documento)\s+(?:n\.?|numero)\s*:?\s*([A-Z0-9][A-Z0-9._\/-]+)/iu',
     ]);
+    if ($invoiceNumber !== null) $invoiceNumber = rtrim($invoiceNumber, '.');
     $pod = octopusFirstMatch($compact, [
         '/\bPOD\s*:?\s*(IT[0-9A-Z]{12,16})\b/iu',
     ]);

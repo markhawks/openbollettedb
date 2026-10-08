@@ -4,6 +4,18 @@ declare(strict_types=1);
 /* Storico versioni: aggiungere una nuova voce in cima ad ogni rilascio */
 $release = [
   [
+    'version' => 'v1.7.1',
+    'date'    => '08/10/2026',
+    'changes' => [
+      'Estesa l’importazione PDF Octopus Energy al vecchio layout utilizzato almeno fino a maggio 2025.',
+      'Riconosciuta la dicitura “Totale importo da pagare” presente nelle bollette precedenti al cambio grafico.',
+      'Le bollette contenenti ricalcoli di mesi precedenti vengono ora analizzate selezionando il blocco di dettaglio relativo al periodo corrente.',
+      'Corretta la lettura di consumo reale, quantità fatturata e perdite nelle bollette con ricalcoli; maggio 2025 viene riconosciuto come 80 kWh reali, 8 kWh di perdite e 88 kWh fatturati.',
+      'Ripulito automaticamente il punto finale presente nei vecchi numeri di fattura elettronica.',
+      'Verificata la compatibilità del parser su tutti i PDF disponibili da marzo 2025 a settembre 2026.',
+    ],
+  ],
+  [
     'version' => 'v1.7.0',
     'date'    => '08/10/2026',
     'changes' => [
