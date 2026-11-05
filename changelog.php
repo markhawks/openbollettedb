@@ -4,6 +4,18 @@ declare(strict_types=1);
 /* Storico versioni: aggiungere una nuova voce in cima ad ogni rilascio */
 $release = [
   [
+    'version' => 'v1.8.0',
+    'date'    => '05/11/2026',
+    'changes' => [
+      'Aggiunto alla dashboard Luce + Gas il confronto mensile con lo stesso mese dell’anno precedente.',
+      'Le variazioni sono separate in Diff. Luce, Diff. Gas e Diff. totale, ciascuna espressa in euro e percentuale.',
+      'Gli aumenti di costo sono evidenziati in rosso e i risparmi in verde; i tooltip indicano il periodo utilizzato per il confronto.',
+      'La cessazione della fornitura Gas dal 1° luglio 2026 è registrata nel confronto: da quella data l’assenza della bolletta viene interpretata come costo zero e non come dato mancante.',
+      'Il confronto resta disponibile anche da gennaio a giugno 2026, mostrando la progressiva riduzione del Gas durante il passaggio a piano a induzione e climatizzatori per il riscaldamento.',
+      'Il totale mensile permette di distinguere il risparmio Gas dall’eventuale aumento della spesa elettrica e di calcolare il risparmio netto complessivo.',
+    ],
+  ],
+  [
     'version' => 'v1.7.1',
     'date'    => '08/10/2026',
     'changes' => [

@@ -6,7 +6,7 @@
 
 ![PHP](https://img.shields.io/badge/PHP-8.x-777BB4?logo=php&logoColor=white)
 ![Database](https://img.shields.io/badge/DB-SQLite-003B57?logo=sqlite&logoColor=white)
-![Versione](https://img.shields.io/badge/versione-v1.7.1-2563eb)
+![Versione](https://img.shields.io/badge/versione-v1.8.0-2563eb)
 ![Tested on](https://img.shields.io/badge/tested%20on-Fedora%2044-294172?logo=fedora&logoColor=white)
 [![License: AGPL v3+](https://img.shields.io/badge/license-AGPL--3.0--or--later-blue)](LICENSE)
 
@@ -27,6 +27,9 @@ domestiche (Luce, Gas, Acqua, TARI, Bonifica) in un database SQLite locale.
   evidenziate automaticamente in rosso.
 - Dashboard **Luce + Gas** con tutti gli anni disponibili visibili nel grafico, compresi quelli che
   contengono dati di una sola delle due utenze.
+- Confronto mensile Luce + Gas con variazioni separate di Luce, Gas e totale rispetto allo stesso
+  mese dell'anno precedente. La cessazione della fornitura Gas dal 1° luglio 2026 viene trattata come
+  costo zero, rendendo visibili sia la riduzione precedente dei consumi sia il risparmio successivo.
 - Scadenza della fattura Luce gestibile nei moduli e mostrata direttamente nello storico delle bollette.
 - Importazione assistita da PDF delle bollette Luce **Octopus Energy**, con anteprima, confronto con
   i dati esistenti, conferma prima della sovrascrittura, controllo dei duplicati e archiviazione per

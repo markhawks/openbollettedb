@@ -6,7 +6,7 @@
 
 ![PHP](https://img.shields.io/badge/PHP-8.x-777BB4?logo=php&logoColor=white)
 ![Database](https://img.shields.io/badge/DB-SQLite-003B57?logo=sqlite&logoColor=white)
-![Version](https://img.shields.io/badge/version-v1.7.1-2563eb)
+![Version](https://img.shields.io/badge/version-v1.8.0-2563eb)
 ![Tested on](https://img.shields.io/badge/tested%20on-Fedora%2044-294172?logo=fedora&logoColor=white)
 [![License: AGPL v3+](https://img.shields.io/badge/license-AGPL--3.0--or--later-blue)](LICENSE)
 
@@ -26,6 +26,9 @@ A small PHP application with no framework or package manager, for tracking house
 - Water self-reading window displayed in the table; future dates are automatically highlighted in
   red with a reminder bell.
 - **Electricity + Gas** chart shows every available year, including years containing only one utility.
+- The Electricity + Gas dashboard compares monthly Electricity, Gas, and combined costs against the
+  same month of the previous year. Gas supply termination from 1 July 2026 is treated as zero cost,
+  showing both the earlier reduction in Gas usage and the savings achieved after disconnection.
 - Electricity invoice due dates can be managed in the forms and are shown directly in bill history.
 - Assisted PDF import for **Octopus Energy** electricity bills, with preview, comparison against
   existing data, confirmation before overwriting, duplicate checks, and utility/year-based archiving.

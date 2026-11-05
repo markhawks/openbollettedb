@@ -128,6 +128,7 @@ $gasRows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 
 $data = [];
+$gasSupplyEndedFrom = '2026-07';
 
 /* inizializza struttura anni */
 foreach ($luceRows as $r) {
@@ -139,7 +140,10 @@ foreach ($luceRows as $r) {
                 'kwh'=>0,
                 'importo_luce'=>0,
                 'smc'=>0,
-                'importo_gas'=>0
+                'importo_gas'=>0,
+                'has_data'=>false,
+                'has_luce'=>false,
+                'has_gas'=>false
             ];
         }
     }
@@ -152,6 +156,8 @@ foreach ($luceRows as $r) {
 
     $data[$y][$m]['kwh']=(float)$r['kwh'];
     $data[$y][$m]['importo_luce']=(float)$r['importo_luce'];
+    $data[$y][$m]['has_data']=true;
+    $data[$y][$m]['has_luce']=true;
 }
 
 /* riempi gas */
@@ -162,12 +168,17 @@ foreach ($gasRows as $r) {
     if (!isset($data[$y])) {
         for ($i=1;$i<=12;$i++) {
             $month = str_pad((string)$i,2,"0",STR_PAD_LEFT);
-            $data[$y][$month] = ['kwh'=>0, 'importo_luce'=>0, 'smc'=>0, 'importo_gas'=>0];
+            $data[$y][$month] = [
+                'kwh'=>0, 'importo_luce'=>0, 'smc'=>0, 'importo_gas'=>0,
+                'has_data'=>false, 'has_luce'=>false, 'has_gas'=>false
+            ];
         }
     }
 
     $data[$y][$m]['smc']=(float)$r['smc'];
     $data[$y][$m]['importo_gas']=(float)$r['importo_gas'];
+    $data[$y][$m]['has_data']=true;
+    $data[$y][$m]['has_gas']=true;
 }
 
 
@@ -184,6 +195,23 @@ foreach ($data as &$months) {
     krsort($months);
 }
 unset($months);
+
+function monthlyCostDifference(?float $difference, ?float $previous): string
+{
+    if ($difference === null) return '<span class="muted">—</span>';
+    $color = $difference > 0 ? '#dc2626' : ($difference < 0 ? '#16a34a' : '#64748b');
+    $sign = $difference > 0 ? '+' : ($difference < 0 ? '−' : '');
+    $percentage = $previous !== null && $previous != 0.0
+        ? (($difference / $previous) * 100)
+        : null;
+    $percentageText = $percentage !== null
+        ? ' (' . ($percentage > 0 ? '+' : '') . number_format($percentage, 1, ',', '.') . '%)'
+        : '';
+
+    return '<strong style="color:' . $color . '; white-space:nowrap;">'
+        . $sign . '€ ' . number_format(abs($difference), 2, ',', '.')
+        . $percentageText . '</strong>';
+}
 
 
 
@@ -214,7 +242,12 @@ unset($months);
 <!-- TABELLE PER ANNO -->
 <?php foreach ($data as $year => $months): ?>
 <section class="card">
-  <h2>Bollette Luce + Gas <?= $year ?></h2>
+  <h2>
+    Bollette Luce + Gas <?= $year ?>
+    <?php if ((int)$year >= 2026): ?>
+      <span class="muted" style="font-size:0.85rem; margin-left:8px;">Gas cessato dal 01/07/2026</span>
+    <?php endif; ?>
+  </h2>
   <table>
     <thead>
       <tr>
@@ -225,12 +258,33 @@ unset($months);
         <th class="right">Smc</th>
         <th class="right">Importo Gas</th>
         <th class="right">Totale Mese</th>
+        <th class="right">Diff. Luce</th>
+        <th class="right">Diff. Gas</th>
+        <th class="right">Diff. totale</th>
       </tr>
     </thead>
     <tbody>
 <?php
 foreach ($months as $m => $v):
   $totaleMese = $v['importo_luce'] + $v['importo_gas'];
+  $previousYear = (string)((int)$year - 1);
+  $previousMonth = $data[$previousYear][$m] ?? null;
+  $gasSupplyInactive = sprintf('%04d-%02d', (int)$year, (int)$m) >= $gasSupplyEndedFrom;
+
+  $hasLuceComparison = !empty($v['has_luce'])
+    && is_array($previousMonth) && !empty($previousMonth['has_luce']);
+  $previousLuce = $hasLuceComparison ? (float)$previousMonth['importo_luce'] : null;
+  $luceDifference = $hasLuceComparison ? (float)$v['importo_luce'] - $previousLuce : null;
+
+  $hasGasComparison = is_array($previousMonth) && !empty($previousMonth['has_gas'])
+    && (!empty($v['has_gas']) || $gasSupplyInactive);
+  $previousGas = $hasGasComparison ? (float)$previousMonth['importo_gas'] : null;
+  $currentGas = !empty($v['has_gas']) ? (float)$v['importo_gas'] : 0.0;
+  $gasDifference = $hasGasComparison ? $currentGas - $previousGas : null;
+
+  $hasTotalComparison = $luceDifference !== null && $gasDifference !== null;
+  $previousTotal = $hasTotalComparison ? $previousLuce + $previousGas : null;
+  $yearDifference = $hasTotalComparison ? $luceDifference + $gasDifference : null;
 ?>
 
 <tr>
@@ -259,6 +313,20 @@ foreach ($months as $m => $v):
     <?= $totaleMese > 0
         ? '€ '.number_format($totaleMese,2,',','.')
         : '-' ?>
+  </td>
+
+  <td class="right" title="Confronto Luce con <?= htmlspecialchars($mesiItaliani[$m] . ' ' . $previousYear) ?>">
+    <?= monthlyCostDifference($luceDifference, $previousLuce) ?>
+  </td>
+
+  <td class="right" title="<?= $gasSupplyInactive && empty($v['has_gas'])
+      ? 'Fornitura Gas cessata: confronto con il costo Gas dello stesso mese dell’anno precedente'
+      : 'Confronto Gas con ' . htmlspecialchars($mesiItaliani[$m] . ' ' . $previousYear) ?>">
+    <?= monthlyCostDifference($gasDifference, $previousGas) ?>
+  </td>
+
+  <td class="right" title="Confronto complessivo con <?= htmlspecialchars($mesiItaliani[$m] . ' ' . $previousYear) ?>">
+    <?= monthlyCostDifference($yearDifference, $previousTotal) ?>
   </td>
 
 
