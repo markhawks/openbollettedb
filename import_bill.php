@@ -134,7 +134,7 @@ function displayImportValue(string $key, mixed $value): string
     if ($value === null || $value === '') return '—';
     if (in_array($key, ['period_start', 'period_end', 'invoice_date', 'due_date'], true)) {
         $date = DateTimeImmutable::createFromFormat('!Y-m-d', (string)$value);
-        return $date ? $date->format('d/m/Y') : (string)$value;
+        return $date ? format_ui_date($date->format('Y-m-d')) : (string)$value;
     }
     if (in_array($key, ['amount_total', 'canone_rai', 'grid_losses_cost'], true)) return '€ ' . number_format((float)$value, 2, ',', '.');
     if (in_array($key, ['kwh', 'billed_kwh', 'physical_kwh', 'grid_losses_kwh'], true)) return number_format((float)$value, 2, ',', '.') . ' kWh';

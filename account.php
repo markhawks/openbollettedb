@@ -143,10 +143,10 @@ $allUsers = $pdo->query('SELECT id, username, display_name, role, created_at FRO
 $csrfToken = csrf_token();
 ?>
 <!doctype html>
-<html lang="it">
+<html lang="<?= htmlspecialchars(current_language()) ?>">
 <head>
   <meta charset="utf-8">
-  <title>Gestione utenti – OpenBolletteDB</title>
+  <title><?= htmlspecialchars(t('account.title')) ?> – OpenBolletteDB</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="icon" type="image/svg+xml" href="assets/img/favicon.svg">
   <link rel="stylesheet" href="assets/css/index_style.css">
@@ -159,7 +159,7 @@ $csrfToken = csrf_token();
 <?php require 'partials/header.php'; ?>
 
 <section class="card">
-  <h2 class="account-title">👤 Il mio profilo</h2>
+  <h2 class="account-title">👤 <?= htmlspecialchars(t('account.profile')) ?></h2>
   <p class="sub account-note">
     Utente: <strong><?= htmlspecialchars($user['username']) ?></strong> &middot;
     Ruolo: <strong><?= $user['role'] === 'admin' ? 'Amministratore (lettura e scrittura)' : 'Sola lettura' ?></strong>
@@ -173,17 +173,17 @@ $csrfToken = csrf_token();
     <input type="hidden" name="action" value="update_profile">
 
     <div class="account-field">
-      <label for="display_name">Nome visualizzato</label>
+      <label for="display_name"><?= htmlspecialchars(t('account.display_name')) ?></label>
       <input type="text" id="display_name" name="display_name"
              value="<?= htmlspecialchars($user['display_name']) ?>" required>
     </div>
 
-    <button type="submit" class="btn">Salva nome</button>
+    <button type="submit" class="btn"><?= htmlspecialchars(t('account.save_name')) ?></button>
   </form>
 </section>
 
 <section class="card">
-  <h2 class="account-title">🔒 Cambia password</h2>
+  <h2 class="account-title">🔒 <?= htmlspecialchars(t('account.change_password')) ?></h2>
 
   <?php if ($successPassword): ?><div class="account-success"><?= htmlspecialchars($successPassword) ?></div><?php endif; ?>
   <?php if ($errorPassword): ?><div class="account-error"><?= htmlspecialchars($errorPassword) ?></div><?php endif; ?>
@@ -193,28 +193,28 @@ $csrfToken = csrf_token();
     <input type="hidden" name="action" value="change_password">
 
     <div class="account-field">
-      <label for="current_password">Password attuale</label>
+      <label for="current_password"><?= htmlspecialchars(t('account.current_password')) ?></label>
       <input type="password" id="current_password" name="current_password" autocomplete="current-password" required>
     </div>
 
     <div class="account-field">
-      <label for="new_password">Nuova password</label>
+      <label for="new_password"><?= htmlspecialchars(t('account.new_password')) ?></label>
       <input type="password" id="new_password" name="new_password" autocomplete="new-password" required minlength="8">
     </div>
     <p class="account-hint">Almeno 8 caratteri.</p>
 
     <div class="account-field">
-      <label for="confirm_password">Conferma nuova password</label>
+      <label for="confirm_password"><?= htmlspecialchars(t('account.confirm_password')) ?></label>
       <input type="password" id="confirm_password" name="confirm_password" autocomplete="new-password" required minlength="8">
     </div>
 
-    <button type="submit" class="btn">Aggiorna password</button>
+    <button type="submit" class="btn"><?= htmlspecialchars(t('account.update_password')) ?></button>
   </form>
 </section>
 
 <?php if (is_admin()): ?>
 <section class="card">
-  <h2 class="account-title">🧑‍🤝‍🧑 Utenti</h2>
+  <h2 class="account-title">🧑‍🤝‍🧑 <?= htmlspecialchars(t('account.users')) ?></h2>
   <p class="sub account-note">
     Tutti gli utenti condividono le stesse bollette. Un amministratore può aggiungere/modificare/eliminare
     bollette; un utente in sola lettura può solo consultare le dashboard.
@@ -227,11 +227,11 @@ $csrfToken = csrf_token();
     <table>
       <thead>
         <tr>
-          <th>Utente</th>
-          <th>Nome visualizzato</th>
-          <th>Ruolo</th>
-          <th>Creato il</th>
-          <th>Azioni</th>
+          <th><?= htmlspecialchars(t('login.user')) ?></th>
+          <th><?= htmlspecialchars(t('account.display_name')) ?></th>
+          <th><?= htmlspecialchars(t('account.role')) ?></th>
+          <th><?= htmlspecialchars(t('account.created')) ?></th>
+          <th><?= htmlspecialchars(t('common.actions')) ?></th>
         </tr>
       </thead>
       <tbody>
@@ -288,30 +288,30 @@ $csrfToken = csrf_token();
     <input type="hidden" name="action" value="add_user">
 
     <div class="account-field">
-      <label for="new_username">Utente (login)</label>
+      <label for="new_username"><?= htmlspecialchars(t('login.user')) ?> (login)</label>
       <input type="text" id="new_username" name="new_username" autocomplete="off" required>
     </div>
 
     <div class="account-field">
-      <label for="new_display_name">Nome visualizzato</label>
+      <label for="new_display_name"><?= htmlspecialchars(t('account.display_name')) ?></label>
       <input type="text" id="new_display_name" name="new_display_name" autocomplete="off" required>
     </div>
 
     <div class="account-field">
-      <label for="new_user_password">Password</label>
+      <label for="new_user_password"><?= htmlspecialchars(t('login.password')) ?></label>
       <input type="password" id="new_user_password" name="new_user_password" autocomplete="new-password" required minlength="8">
     </div>
     <p class="account-hint">Almeno 8 caratteri.</p>
 
     <div class="account-field">
-      <label for="new_role">Ruolo</label>
+      <label for="new_role"><?= htmlspecialchars(t('account.role')) ?></label>
       <select id="new_role" name="new_role">
         <option value="user" selected>Sola lettura</option>
         <option value="admin">Amministratore</option>
       </select>
     </div>
 
-    <button type="submit" class="btn">Crea utente</button>
+    <button type="submit" class="btn"><?= htmlspecialchars(t('account.create_user')) ?></button>
   </form>
 </section>
 <?php endif; ?>

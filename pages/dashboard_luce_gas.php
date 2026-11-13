@@ -88,11 +88,7 @@ ORDER BY year DESC
 $sumStmt->execute();
 $yearTotals = $sumStmt->fetchAll(PDO::FETCH_ASSOC);
 
-$mesiItaliani = [
-  "01"=>"Gennaio","02"=>"Febbraio","03"=>"Marzo","04"=>"Aprile",
-  "05"=>"Maggio","06"=>"Giugno","07"=>"Luglio","08"=>"Agosto",
-  "09"=>"Settembre","10"=>"Ottobre","11"=>"Novembre","12"=>"Dicembre"
-];
+$mesiItaliani = localized_months();
 
 
 
@@ -223,14 +219,14 @@ function monthlyCostDifference(?float $difference, ?float $previous): string
 
 <header class="topbar">
   <div>
-    <h1>💡🔥 Luce + Gas</h1>
-    <div class="sub">Storico consumi e costi Luce + Gas</div>
+    <h1>💡🔥 <?= htmlspecialchars(t('dashboard.electricity_gas')) ?></h1>
+    <div class="sub"><?= htmlspecialchars(t('dashboard.electricity_gas_sub')) ?></div>
   </div>
 </header>
 
 <!-- GRAFICO CONSUMI -->
 <section class="card">
-  <h2>Andamento Consumi Luce + Gas</h2>
+  <h2><?= htmlspecialchars(t('dashboard.consumption')) ?> <?= htmlspecialchars(t('dashboard.electricity_gas')) ?></h2>
   <div style="height:300px">
     <canvas id="consumptionChart"></canvas>
 
@@ -243,7 +239,7 @@ function monthlyCostDifference(?float $difference, ?float $previous): string
 <?php foreach ($data as $year => $months): ?>
 <section class="card">
   <h2>
-    Bollette Luce + Gas <?= $year ?>
+    <?= htmlspecialchars(t('dashboard.bills')) ?> <?= htmlspecialchars(t('dashboard.electricity_gas')) ?> <?= $year ?>
     <?php if ((int)$year >= 2026): ?>
       <span class="muted" style="font-size:0.85rem; margin-left:8px;">Gas cessato dal 01/07/2026</span>
     <?php endif; ?>
@@ -252,15 +248,15 @@ function monthlyCostDifference(?float $difference, ?float $previous): string
     <thead>
       <tr>
         <th class="muted">#</th>
-        <th>Mese</th>
+        <th><?= htmlspecialchars(t('common.month')) ?></th>
         <th class="right">kWh</th>
-        <th class="right">Importo Luce</th>
+        <th class="right"><?= htmlspecialchars(t('dashboard.electricity_amount')) ?></th>
         <th class="right">Smc</th>
-        <th class="right">Importo Gas</th>
-        <th class="right">Totale Mese</th>
-        <th class="right">Diff. Luce</th>
-        <th class="right">Diff. Gas</th>
-        <th class="right">Diff. totale</th>
+        <th class="right"><?= htmlspecialchars(t('dashboard.gas_amount')) ?></th>
+        <th class="right"><?= htmlspecialchars(t('dashboard.month_total')) ?></th>
+        <th class="right"><?= htmlspecialchars(t('dashboard.electricity_diff')) ?></th>
+        <th class="right"><?= htmlspecialchars(t('dashboard.gas_diff')) ?></th>
+        <th class="right"><?= htmlspecialchars(t('dashboard.total_diff')) ?></th>
       </tr>
     </thead>
     <tbody>
@@ -350,7 +346,7 @@ foreach ($months as $m => $v):
 
 <!-- foreach RIEPILOGO -->
 <section class="card">
-  <h2>Riepilogo Annuale</h2>
+  <h2><?= htmlspecialchars(t('common.annual_summary')) ?></h2>
   <ul class="list">
 
 <?php foreach ($yearTotals as $yt): 

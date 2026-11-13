@@ -7,7 +7,7 @@ $csrfToken = csrf_token();
 $u = $_GET['u'] ?? 'luce';
 ?>
 <!doctype html>
-<html lang="it">
+<html lang="<?= htmlspecialchars(current_language()) ?>">
 <head>
   <meta charset="utf-8">
   <title>OpenBolletteDB</title>

@@ -118,8 +118,8 @@ function formatAcquaReading(mixed $value): string
 <!-- HEADER -->
   <header class="topbar">
     <div>
-      <h1>💧 Acqua</h1>
-      <div class="sub">Consumi rilevati, stimati e conguagli separati</div>
+      <h1>💧 <?= htmlspecialchars(t('dashboard.water')) ?></h1>
+      <div class="sub"><?= htmlspecialchars(t('dashboard.water_sub')) ?></div>
     </div>
     <?php if (is_admin()): ?>
     <a class="btn" href="new_bill.php?u=acqua">+ Nuova Bolletta</a>
@@ -148,7 +148,7 @@ function formatAcquaReading(mixed $value): string
 </section>
 
 <section class="card">
-  <h2>Riepilogo Annuale</h2>
+  <h2><?= htmlspecialchars(t('common.annual_summary')) ?></h2>
 
   <ul class="list">
     <?php foreach ($billsByYear as $year => $items):
@@ -209,13 +209,13 @@ function formatAcquaReading(mixed $value): string
 <?php foreach ($billsByYear as $year => $items): ?>
 <section class="card">
   <div class="card-year-header">
-    <h2>Bollette Acqua – <?= $year ?></h2>
+    <h2><?= htmlspecialchars(t('dashboard.bills')) ?> <?= htmlspecialchars(t('dashboard.water')) ?> – <?= $year ?></h2>
     <?php if (is_admin()): ?>
     <form method="post" action="reset_year.php" class="inline-action-form" onsubmit="return confirmResetAnno('Acqua', <?= $year ?>);">
       <input type="hidden" name="csrf" value="<?= htmlspecialchars($csrfToken) ?>">
       <input type="hidden" name="u" value="acqua">
       <input type="hidden" name="year" value="<?= $year ?>">
-      <button class="btn-reset-year" type="submit" title="Elimina tutte le bollette Acqua di questo anno">🗑️ Svuota anno</button>
+      <button class="btn-reset-year" type="submit" title="<?= htmlspecialchars(t('common.clear_year')) ?>">🗑️ <?= htmlspecialchars(t('common.clear_year')) ?></button>
     </form>
     <?php endif; ?>
   </div>
@@ -224,17 +224,17 @@ function formatAcquaReading(mixed $value): string
 
 <thead>
   <tr>
-    <th>Data scadenza</th>
-    <th>Periodo</th>
-    <th>Letture</th>
+    <th><?= htmlspecialchars(t('common.due_date')) ?></th>
+    <th><?= htmlspecialchars(t('common.period')) ?></th>
+    <th><?= htmlspecialchars(t('common.readings')) ?></th>
     <th>Prossima lettura</th>
     <th>Storico letture</th>
     <th>Dettaglio consumo</th>
     <th class="right">m³/giorno</th>
     <th class="right">€/m³</th>
-    <th class="right">Importo €</th>
-    <th>Note</th>
-    <th style="text-align:center;">Azioni</th>
+    <th class="right"><?= htmlspecialchars(t('common.amount')) ?> €</th>
+    <th><?= htmlspecialchars(t('common.notes')) ?></th>
+    <th style="text-align:center;"><?= htmlspecialchars(t('common.actions')) ?></th>
   </tr>
 </thead>
 
@@ -261,14 +261,14 @@ function formatAcquaReading(mixed $value): string
   <!-- DATA SCADENZA (prima colonna) -->
   <td>
     <?= $b['issue_date']
-      ? date('d/m/Y', strtotime($b['issue_date']))
+      ? htmlspecialchars(format_ui_date((string)$b['issue_date']))
       : '-' ?>
   </td>
 
   <!-- PERIODO -->
   <td class="muted">
-    <?= date('d/m/Y', strtotime($b['period_start'])) ?> —
-    <?= date('d/m/Y', strtotime($b['period_end'])) ?>
+    <?= htmlspecialchars(format_ui_date((string)$b['period_start'])) ?> —
+    <?= htmlspecialchars(format_ui_date((string)$b['period_end'])) ?>
     <?php if ($isStima): ?>
       <span title="Bolletta stimata, non ancora reale"
             style="margin-left:6px; padding:2px 8px; background:#fef3c7; color:#92400e;
@@ -297,10 +297,10 @@ function formatAcquaReading(mixed $value): string
         <span class="next-reading-reminder" title="Periodo futuro: ricordati di comunicare la lettura">🔔</span>
       <?php endif; ?>
       <span<?= $startIsFuture ? ' class="next-reading-future"' : '' ?>>
-        <?= date('d/m/Y', strtotime($b['next_reading_start'])) ?>
+        <?= htmlspecialchars(format_ui_date((string)$b['next_reading_start'])) ?>
       </span> —<br>
       <span<?= $endIsFuture ? ' class="next-reading-future"' : '' ?>>
-        <?= date('d/m/Y', strtotime($b['next_reading_end'])) ?>
+        <?= htmlspecialchars(format_ui_date((string)$b['next_reading_end'])) ?>
       </span>
     <?php else: ?>
       -
@@ -312,7 +312,7 @@ function formatAcquaReading(mixed $value): string
     <?php $readings = $readingsByBill[(int)$b['id']] ?? []; ?>
     <?php if ($readings): ?>
       <?php foreach ($readings as $r): ?>
-        <?= date('d/m/Y', strtotime($r['reading_date'])) ?>:
+        <?= htmlspecialchars(format_ui_date((string)$r['reading_date'])) ?>:
         <?= formatAcquaReading($r['reading_value']) ?> m³<br>
       <?php endforeach; ?>
     <?php else: ?>

@@ -6,7 +6,7 @@
 
 ![PHP](https://img.shields.io/badge/PHP-8.x-777BB4?logo=php&logoColor=white)
 ![Database](https://img.shields.io/badge/DB-SQLite-003B57?logo=sqlite&logoColor=white)
-![Versione](https://img.shields.io/badge/versione-v1.8.0-2563eb)
+![Versione](https://img.shields.io/badge/versione-v1.9.0-2563eb)
 ![Tested on](https://img.shields.io/badge/tested%20on-Fedora%2044-294172?logo=fedora&logoColor=white)
 [![License: AGPL v3+](https://img.shields.io/badge/license-AGPL--3.0--or--later-blue)](LICENSE)
 
@@ -48,6 +48,11 @@ domestiche (Luce, Gas, Acqua, TARI, Bonifica) in un database SQLite locale.
 - Account multipli con ruoli **Amministratore** e **Sola lettura**, modifica del profilo e revoca
   automatica delle sessioni dopo variazioni sensibili dell'account.
 - Interfaccia responsiva, pagina di login con versione visibile e note di rilascio integrate.
+- Interfaccia multilingua **Italiano / English** con preferenza salvata per ogni utente in Settings;
+  menu, login, impostazioni, dashboard principali, moduli e date seguono la lingua selezionata.
+- Nuova pagina **Settings** per lingua, profilo e configurazioni future. Gli amministratori possono
+  esportare bollette, metriche e letture in JSON e importarle su un altro nodo con anteprima,
+  rilevamento dei conflitti, scelta conserva/sostituisci e backup SQLite automatico.
 - Dati dimostrativi opzionali e strumenti per svuotare in sicurezza una singola utenza/anno.
 
 ## Screenshot
@@ -187,6 +192,21 @@ una registrazione già reale.
 Le scansioni prive di testo richiedono OCR e per ora non sono supportate. Vedi anche
 [`data/imports/README.md`](data/imports/README.md).
 
+## Settings, lingua e trasferimento fra nodi
+
+La voce **⚙️ Settings** riunisce profilo/utenti, preferenza della lingua e trasferimento dati. Ogni
+utente può scegliere **Italiano** oppure **English**; la preferenza viene salvata nel database e
+ripristinata automaticamente agli accessi successivi.
+
+Gli amministratori possono scaricare un file JSON selezionando utenze e anni. Il file contiene
+bollette, metriche e letture, una versione del formato e un checksum SHA-256. Non contiene account,
+password, sessioni o documenti PDF. Sul nodo di destinazione, **Analizza file** mostra prima record
+nuovi, record identici e conflitti con una bolletta locale dello stesso periodo.
+
+Per i conflitti si può conservare il dato locale oppure sostituirlo con quello importato. Prima della
+conferma viene creato in `data/` un backup `backup_before_transfer_*.sqlite`; l'importazione avviene in
+una transazione, quindi un errore non lascia aggiornamenti parziali.
+
 `seed_demo.php` inserisce circa due anni di bollette fittizie per ogni utenza, così l'app non parte
 vuota alla prima installazione: è un modo pratico per vedere subito grafici, riepiloghi e stime
 compilati, e per capire come strutturare le proprie bollette reali. Non fa nulla (e non tocca dati
@@ -200,7 +220,8 @@ e ripartire con i propri dati reali.
 - `pages/dashboard_*.php` — una dashboard per ogni utenza (luce, gas, acqua, tari, bonifica)
 - `new_bill.php` / `edit_bill.php` / `delete_bill.php` / `reset_year.php` — CRUD bollette
 - `login.php` / `logout.php` — autenticazione (vedi [Sicurezza](#sicurezza))
-- `account.php` — gestione utenti (icona ⚙️ Utente nel menu in alto): profilo/password personali per
+- `settings.php` — lingua, collegamento alla gestione utenti ed esportazione/importazione fra nodi
+- `account.php` — profilo/password personali per
   tutti, più creazione utenti, ruoli, reset password e cancellazione per gli amministratori
 - `app/auth.php` — gestione sessione utente e permessi (`require_login()`, `require_admin()`,
   `is_admin()`, `attempt_login()`, `logout_user()`)

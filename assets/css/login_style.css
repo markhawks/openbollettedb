@@ -112,3 +112,18 @@
   font-size: 12px;
   color: #99a;
 }
+.login-language {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin: 8px 0 14px;
+  font-size: .85rem;
+}
+
+.login-language a {
+  color: #1f6feb;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.login-language a:hover { text-decoration: underline; }

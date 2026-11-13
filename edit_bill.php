@@ -395,11 +395,11 @@ $tariDisplayGross = (float)$bill['amount_total'] - $tariStoredAdjustment;
 $tariDisplayCredit = $tariStoredAdjustment < 0 ? abs($tariStoredAdjustment) : 0;
 ?>
 <!doctype html>
-<html lang="it">
+<html lang="<?= htmlspecialchars(current_language()) ?>">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Modifica Bolletta</title>
+  <title><?= htmlspecialchars(t('form.edit_bill')) ?></title>
   <link rel="icon" type="image/svg+xml" href="assets/img/favicon.svg">
   <link rel="stylesheet" href="assets/css/new_bill_style.css?v=<?= filemtime('assets/css/new_bill_style.css') ?>">
 </head>
@@ -407,7 +407,7 @@ $tariDisplayCredit = $tariStoredAdjustment < 0 ? abs($tariStoredAdjustment) : 0;
 <div class="container">
   <header class="topbar">
     <div>
-      <h1>Modifica Bolletta</h1>
+      <h1><?= htmlspecialchars(t('form.edit_bill')) ?></h1>
       <div class="sub"><?= htmlspecialchars(strtoupper($utilityCode)) ?> • ID <?= (int)$billId ?></div>
     </div>
     <a class="btn secondary" href="index.php?u=<?= htmlspecialchars($utilityCode) ?>">Annulla</a>
@@ -425,25 +425,25 @@ $tariDisplayCredit = $tariStoredAdjustment < 0 ? abs($tariStoredAdjustment) : 0;
       <div class="form-inline">
         
         <div class="field">
-          <label><?= $utilityCode === 'luce' ? 'Scadenza fattura' : 'Data scadenza' ?></label>
+          <label><?= htmlspecialchars(t($utilityCode === 'luce' ? 'common.invoice_due' : 'form.due_date')) ?></label>
           <input type="text" inputmode="numeric" placeholder="gg/mm/aaaa" pattern="\d{2}/\d{2}/\d{4}" name="issue_date"
                 value="<?= htmlspecialchars(displayItalianDate($bill['issue_date'] ?? '')) ?>">
         </div>
 
         <div class="field">
-          <label>Dal</label>
+          <label><?= htmlspecialchars(t('form.from')) ?></label>
           <input type="text" inputmode="numeric" placeholder="gg/mm/aaaa" pattern="\d{2}/\d{2}/\d{4}" name="period_start" id="period_start"
                  value="<?= htmlspecialchars(displayItalianDate($bill['period_start'])) ?>"<?= $utilityCode === 'tari' ? ' readonly' : '' ?>>
         </div>
 
         <div class="field">
-          <label>Al</label>
+          <label><?= htmlspecialchars(t('form.to')) ?></label>
           <input type="text" inputmode="numeric" placeholder="gg/mm/aaaa" pattern="\d{2}/\d{2}/\d{4}" name="period_end" id="period_end"
                  value="<?= htmlspecialchars(displayItalianDate($bill['period_end'])) ?>"<?= $utilityCode === 'tari' ? ' readonly' : '' ?>>
         </div>
 
         <div class="field">
-          <label><?= $utilityCode === 'tari' ? 'Importo lordo (€)' : 'Importo Totale (€)' ?></label>
+          <label><?= htmlspecialchars(t($utilityCode === 'tari' ? 'form.gross_amount' : 'form.total_amount')) ?></label>
           <input type="number" step="0.01" name="amount_total"
                  value="<?= htmlspecialchars((string)($utilityCode === 'tari' ? $tariDisplayGross : $bill['amount_total'])) ?>">
         </div>
@@ -456,19 +456,19 @@ $tariDisplayCredit = $tariStoredAdjustment < 0 ? abs($tariStoredAdjustment) : 0;
           </div>
           
           <div class="field">
-            <label>Materia energia (€/kWh)</label>
+            <label><?= htmlspecialchars(t('form.energy_price')) ?></label>
             <input type="number" step="0.0001" name="energy_price"
                   value="<?= htmlspecialchars((string)($metrics['energy_price'] ?? '')) ?>">
           </div>
 
           <div class="field">
-            <label>Commercializzazione (€/mese)</label>
+            <label><?= htmlspecialchars(t('form.commercialization')) ?></label>
             <input type="number" step="0.01" name="commercial_fee"
                   value="<?= htmlspecialchars((string)($metrics['commercial_fee'] ?? '')) ?>">
           </div>
 
           <div class="field">
-            <label>Canone RAI (€)</label>
+            <label><?= htmlspecialchars(t('form.tv_fee')) ?></label>
             <input type="number" step="0.01" name="canone_rai"
                    value="<?= htmlspecialchars((string)($metrics['canone_rai'] ?? '')) ?>">
           </div>
@@ -503,7 +503,7 @@ $tariDisplayCredit = $tariStoredAdjustment < 0 ? abs($tariStoredAdjustment) : 0;
 
           <!-- ✅ COMM. €/MESE (NUOVO – GAS) -->
           <div class="field">
-            <label>Commercializzazione (€/mese)</label>
+            <label><?= htmlspecialchars(t('form.commercialization')) ?></label>
             <input type="number" step="0.01" name="commercial_fee"
                   value="<?= htmlspecialchars((string)($metrics['commercial_fee'] ?? '')) ?>">
             <small class="muted">Costo fisso ricorrente</small>
@@ -550,19 +550,19 @@ $tariDisplayCredit = $tariStoredAdjustment < 0 ? abs($tariStoredAdjustment) : 0;
               </div>
 
               <div class="field">
-                <label>Prossima lettura dal</label>
+                <label><?= htmlspecialchars(t('form.next_reading_from')) ?></label>
                 <input type="text" inputmode="numeric" placeholder="gg/mm/aaaa" pattern="\d{2}/\d{2}/\d{4}" name="next_reading_start"
                       value="<?= htmlspecialchars(displayItalianDate($metrics['next_reading_start'] ?? '')) ?>">
               </div>
               <div class="field">
-                <label>Prossima lettura al</label>
+                <label><?= htmlspecialchars(t('form.next_reading_to')) ?></label>
                 <input type="text" inputmode="numeric" placeholder="gg/mm/aaaa" pattern="\d{2}/\d{2}/\d{4}" name="next_reading_end"
                       value="<?= htmlspecialchars(displayItalianDate($metrics['next_reading_end'] ?? '')) ?>">
                 <small class="muted">Periodo indicato in bolletta per comunicare l'autolettura</small>
               </div>
 
               <div class="field wide">
-                <label>Storico letture (opzionale)</label>
+                <label><?= htmlspecialchars(t('form.reading_history')) ?></label>
                 <div id="readings-list">
                   <?php if (!$existingReadings): ?>
                     <div class="reading-row" style="display:flex; gap:8px; margin-bottom:6px;">
@@ -581,7 +581,7 @@ $tariDisplayCredit = $tariStoredAdjustment < 0 ? abs($tariStoredAdjustment) : 0;
                     <?php endforeach; ?>
                   <?php endif; ?>
                 </div>
-                <button type="button" class="btn secondary" id="add-reading">+ Aggiungi lettura</button>
+                <button type="button" class="btn secondary" id="add-reading">+ <?= htmlspecialchars(t('form.add_reading')) ?></button>
                 <small class="muted">Letture intermedie del contatore durante il periodo, per capire l'andamento del consumo</small>
               </div>
 
@@ -589,13 +589,13 @@ $tariDisplayCredit = $tariStoredAdjustment < 0 ? abs($tariStoredAdjustment) : 0;
 
         <?php if ($utilityCode === 'bonifica'): ?>
           <div class="field">
-            <label>Data scadenza</label>
+            <label><?= htmlspecialchars(t('form.due_date')) ?></label>
             <input type="text" inputmode="numeric" placeholder="gg/mm/aaaa" pattern="\d{2}/\d{2}/\d{4}" name="data_scadenza"
                    value="<?= htmlspecialchars(displayItalianDate($metrics['data_scadenza'] ?? '')) ?>">
           </div>
 
           <div class="field">
-            <label>Data di pagamento</label>
+            <label><?= htmlspecialchars(t('form.payment_date')) ?></label>
             <input type="text" inputmode="numeric" placeholder="gg/mm/aaaa" pattern="\d{2}/\d{2}/\d{4}" name="data_pagamento"
                    value="<?= htmlspecialchars(displayItalianDate($metrics['data_pagamento'] ?? '')) ?>">
           </div>
@@ -604,7 +604,7 @@ $tariDisplayCredit = $tariStoredAdjustment < 0 ? abs($tariStoredAdjustment) : 0;
 
         <?php if ($utilityCode === 'tari'): ?>
           <div class="field">
-            <label>Trimestre di competenza</label>
+            <label><?= htmlspecialchars(t('form.quarter')) ?></label>
             <select name="periodo_competenza" id="trimestre" data-current-year="<?= (int)date('Y', strtotime($bill['period_start'])) ?>" required>
 
               <?php
@@ -638,19 +638,19 @@ $tariDisplayCredit = $tariStoredAdjustment < 0 ? abs($tariStoredAdjustment) : 0;
           </div>
 
           <div class="field">
-              <label>Data fattura</label>
+              <label><?= htmlspecialchars(t('form.invoice_date')) ?></label>
               <input type="text" inputmode="numeric" placeholder="gg/mm/aaaa" pattern="\d{2}/\d{2}/\d{4}" name="data_fattura"
               value="<?= htmlspecialchars(displayItalianDate($metrics['data_fattura'] ?? '')) ?>">
           </div>
 
           <div class="field wide">
-            <label>Numero avviso/Fattura n.</label>
+            <label><?= htmlspecialchars(t('form.invoice_number')) ?></label>
             <input type="text" name="numero_fattura"
                    value="<?= htmlspecialchars((string)($metrics['numero_fattura'] ?? '')) ?>">
           </div>
 
           <div class="field">
-            <label>Codice Utente/Cliente</label>
+            <label><?= htmlspecialchars(t('form.customer_code')) ?></label>
             <div class="field-input-action">
               <input type="text" name="codice_cliente" maxlength="100"
                      value="<?= htmlspecialchars((string)($metrics['codice_cliente'] ?? '')) ?>">
@@ -663,7 +663,7 @@ $tariDisplayCredit = $tariStoredAdjustment < 0 ? abs($tariStoredAdjustment) : 0;
           </div>
 
           <div class="field">
-            <label>Codice Utenza/Contratto n.</label>
+            <label><?= htmlspecialchars(t('form.utility_code')) ?></label>
             <div class="field-input-action">
               <input type="text" name="codice_utenza" maxlength="100"
                      value="<?= htmlspecialchars((string)($metrics['codice_utenza'] ?? '')) ?>">
@@ -676,7 +676,7 @@ $tariDisplayCredit = $tariStoredAdjustment < 0 ? abs($tariStoredAdjustment) : 0;
           </div>
 
           <div class="field">
-            <label>Tipo avviso</label>
+            <label><?= htmlspecialchars(t('form.notice_type')) ?></label>
             <select name="tipo_avviso">
               <?php
                 $tipi = ['Ordinaria','Rettifica','Conguaglio'];
@@ -690,13 +690,13 @@ $tariDisplayCredit = $tariStoredAdjustment < 0 ? abs($tariStoredAdjustment) : 0;
           </div>
 
           <div class="field">
-            <label>% Raccolta differenziata</label>
+            <label><?= htmlspecialchars(t('form.recycling')) ?></label>
             <input type="number" step="0.1" min="0" max="100" name="raccolta_diff"
                    value="<?= htmlspecialchars((string)($metrics['raccolta_diff'] ?? '')) ?>">
           </div>
 
           <div class="field">
-            <label>Svuotature indifferenziato (20 l)</label>
+            <label><?= htmlspecialchars(t('form.residual_emptyings')) ?></label>
             <input type="number" name="svuotature_grigio" min="0" max="20" step="1"
                    value="<?= htmlspecialchars((string)($metrics['svuotature_grigio'] ?? '0')) ?>">
           </div>
@@ -710,7 +710,7 @@ $tariDisplayCredit = $tariStoredAdjustment < 0 ? abs($tariStoredAdjustment) : 0;
         <?php endif; ?>
 
         <div class="field">
-          <label><?= $utilityCode === 'tari' ? 'Credito/rimborso utilizzato (€)' : 'Extra / Bonus (€)' ?></label>
+          <label><?= htmlspecialchars(t($utilityCode === 'tari' ? 'form.credit' : 'form.extra_bonus')) ?></label>
           <input type="number" step="0.01" <?= $utilityCode === 'tari' ? 'min="0" name="tari_credit"' : 'name="extra_adjust"' ?>
                  value="<?= htmlspecialchars((string)($utilityCode === 'tari' ? $tariDisplayCredit : ($metrics['extra_adjust'] ?? '0.00'))) ?>">
           <small class="muted"><?= $utilityCode === 'tari'
@@ -719,13 +719,13 @@ $tariDisplayCredit = $tariStoredAdjustment < 0 ? abs($tariStoredAdjustment) : 0;
         </div>
 
         <div class="field wide">
-          <label>Note</label>
+          <label><?= htmlspecialchars(t('form.notes')) ?></label>
           <input type="text" name="notes" placeholder="Opzionale..."
                  value="<?= htmlspecialchars((string)($bill['notes'] ?? '')) ?>">
         </div>
 
         <div class="actions">
-          <button class="btn" type="submit">Salva Modifiche</button>
+          <button class="btn" type="submit"><?= htmlspecialchars(t('form.save_changes')) ?></button>
         </div>
 
       </div>

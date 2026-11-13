@@ -2,6 +2,7 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/db.php';
+require_once __DIR__ . '/i18n.php';
 
 const AUTH_IDLE_TIMEOUT = 1800;
 const AUTH_MAX_ATTEMPTS = 5;
@@ -56,7 +57,7 @@ function current_user(): ?array
         logout_user();
         return null;
     }
-    $stmt = db()->prepare('SELECT id, username, display_name, role, session_version FROM users WHERE id = ?');
+    $stmt = db()->prepare('SELECT id, username, display_name, role, session_version, language FROM users WHERE id = ?');
     $stmt->execute([(int)$_SESSION['user']['id']]);
     $user = $stmt->fetch(PDO::FETCH_ASSOC);
     if (!$user || (int)$user['session_version'] !== (int)($_SESSION['user']['session_version'] ?? -1)) {
@@ -69,7 +70,9 @@ function current_user(): ?array
         'display_name' => (string)$user['display_name'],
         'role' => (string)$user['role'],
         'session_version' => (int)$user['session_version'],
+        'language' => in_array((string)$user['language'], SUPPORTED_LANGUAGES, true) ? (string)$user['language'] : 'it',
     ];
+    set_current_language($_SESSION['user']['language']);
     $_SESSION['last_activity'] = $now;
     return $_SESSION['user'];
 }
@@ -98,7 +101,7 @@ function attempt_login(string $username, string $password): bool
     $attempt = $attemptStmt->fetch(PDO::FETCH_ASSOC);
     if ($attempt && (int)$attempt['blocked_until'] > $now) return false;
 
-    $stmt = $pdo->prepare('SELECT id, username, password_hash, display_name, role, session_version FROM users WHERE username = ?');
+    $stmt = $pdo->prepare('SELECT id, username, password_hash, display_name, role, session_version, language FROM users WHERE username = ?');
     $stmt->execute([$username]);
     $user = $stmt->fetch(PDO::FETCH_ASSOC);
     if (!$user || !password_verify($password, $user['password_hash'])) {
@@ -118,7 +121,9 @@ function attempt_login(string $username, string $password): bool
         'display_name' => (string)$user['display_name'],
         'role' => (string)$user['role'],
         'session_version' => (int)$user['session_version'],
+        'language' => in_array((string)$user['language'], SUPPORTED_LANGUAGES, true) ? (string)$user['language'] : 'it',
     ];
+    set_current_language($_SESSION['user']['language']);
     $_SESSION['last_activity'] = $now;
     return true;
 }

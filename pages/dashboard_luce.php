@@ -121,11 +121,7 @@ $sumStmt = $pdo->prepare("
 $sumStmt->execute([$utilityId, $utilityId, $utilityId, $utilityId, $utilityId, $utilityId]);
 $yearTotals = $sumStmt->fetchAll(PDO::FETCH_ASSOC);
 
-$mesiItaliani = [
-  "01"=>"Gennaio","02"=>"Febbraio","03"=>"Marzo","04"=>"Aprile",
-  "05"=>"Maggio","06"=>"Giugno","07"=>"Luglio","08"=>"Agosto",
-  "09"=>"Settembre","10"=>"Ottobre","11"=>"Novembre","12"=>"Dicembre"
-];
+$mesiItaliani = localized_months();
 
 /* Mappa anno => totali, usata per calcolare la crescita rispetto all'anno precedente */
 $yearMap = [];
@@ -161,20 +157,20 @@ function luceGrowthBadge(array $crescita, string $label, string $unit): string {
 
 <header class="topbar">
   <div>
-    <h1>💡 Energia Elettrica</h1>
-    <div class="sub">Storico consumi e costi</div>
+    <h1>💡 <?= htmlspecialchars(t('dashboard.electricity')) ?></h1>
+    <div class="sub"><?= htmlspecialchars(t('dashboard.history_costs')) ?></div>
   </div>
   <?php if (is_admin()): ?>
   <div class="dashboard-actions">
-    <a class="btn secondary" href="import_bill.php">📄 Importa PDF</a>
-    <a class="btn" href="new_bill.php?u=luce">+ Nuova bolletta</a>
+    <a class="btn secondary" href="import_bill.php">📄 <?= htmlspecialchars(t('common.import_pdf')) ?></a>
+    <a class="btn" href="new_bill.php?u=luce">+ <?= htmlspecialchars(t('common.new_bill')) ?></a>
   </div>
   <?php endif; ?>
 </header>
 
 <!-- GRAFICO CONSUMI -->
 <section class="card">
-  <h2>Andamento Consumi (kWh)</h2>
+  <h2><?= htmlspecialchars(t('dashboard.consumption')) ?> (kWh)</h2>
   <div style="height:300px">
     <canvas id="consumptionChart"></canvas>
   </div>
@@ -191,7 +187,7 @@ function luceGrowthBadge(array $crescita, string $label, string $unit): string {
 <section class="card">
   <div class="card-year-header">
     <h2>
-      Bollette <?= $year ?>
+      <?= htmlspecialchars(t('dashboard.bills')) ?> <?= $year ?>
       <?php if ($crescitaKwh || $crescitaSpesa): ?>
         <span style="font-size:1rem; margin-left:12px; display:inline-flex; gap:14px; vertical-align:middle;">
           <?= $crescitaKwh ? luceGrowthBadge($crescitaKwh, 'Consumo', 'kWh') : '' ?>
@@ -206,7 +202,7 @@ function luceGrowthBadge(array $crescita, string $label, string $unit): string {
       <input type="hidden" name="csrf" value="<?= htmlspecialchars($csrfToken) ?>">
       <input type="hidden" name="u" value="luce">
       <input type="hidden" name="year" value="<?= $year ?>">
-      <button class="btn-reset-year" type="submit" title="Elimina tutte le bollette Luce di questo anno">🗑️ Svuota anno</button>
+      <button class="btn-reset-year" type="submit" title="<?= htmlspecialchars(t('common.clear_year')) ?>">🗑️ <?= htmlspecialchars(t('common.clear_year')) ?></button>
     </form>
     <?php endif; ?>
   </div>
@@ -214,22 +210,22 @@ function luceGrowthBadge(array $crescita, string $label, string $unit): string {
     <thead>
       <tr>
         <th class="muted">#</th>
-        <th>Mese</th>
-        <th>Periodo</th>
-        <th class="right">kWh fatt.</th>
-        <th class="right">kWh reali</th>
-        <th class="right">kWh Perdite</th>
-        <th class="right">Costo perdite €</th>
-        <th class="right">Materia €/kWh</th>
-        <th class="right">Comm. €/mese</th>
-        <th class="right">Canone €</th>
-        <th class="right">Extra</th>
-        <th class="right">Importo</th>
-        <th>Scadenza fattura</th>
-        <th>Importate</th>
+        <th><?= htmlspecialchars(t('common.month')) ?></th>
+        <th><?= htmlspecialchars(t('common.period')) ?></th>
+        <th class="right"><?= htmlspecialchars(t('dashboard.billed_kwh')) ?></th>
+        <th class="right"><?= htmlspecialchars(t('dashboard.actual_kwh')) ?></th>
+        <th class="right"><?= htmlspecialchars(t('dashboard.losses_kwh')) ?></th>
+        <th class="right"><?= htmlspecialchars(t('dashboard.loss_cost')) ?></th>
+        <th class="right"><?= htmlspecialchars(t('dashboard.energy_price')) ?></th>
+        <th class="right"><?= htmlspecialchars(t('dashboard.commercial_fee')) ?></th>
+        <th class="right"><?= htmlspecialchars(t('dashboard.tv_fee')) ?></th>
+        <th class="right"><?= htmlspecialchars(t('common.extra')) ?></th>
+        <th class="right"><?= htmlspecialchars(t('common.amount')) ?></th>
+        <th><?= htmlspecialchars(t('common.invoice_due')) ?></th>
+        <th><?= htmlspecialchars(t('dashboard.imported')) ?></th>
         <th class="right">€/kWh</th>
-        <th>Note</th>
-        <th style="text-align:center;">Azioni</th>
+        <th><?= htmlspecialchars(t('common.notes')) ?></th>
+        <th style="text-align:center;"><?= htmlspecialchars(t('common.actions')) ?></th>
       </tr>
     </thead>
 <tbody>
@@ -258,8 +254,8 @@ foreach ($bills as $b):
       <?php endif; ?>
     </td>
     <td class="muted">
-      <?= date('d/m/Y', strtotime($b['period_start'])) ?> –
-      <?= date('d/m/Y', strtotime($b['period_end'])) ?>
+      <?= htmlspecialchars(format_ui_date((string)$b['period_start'])) ?> –
+      <?= htmlspecialchars(format_ui_date((string)$b['period_end'])) ?>
     </td>
     <td class="right">
       <?= $b['billed_kwh'] !== null ? number_format((float)$b['billed_kwh'], 1, ',', '.') : '-' ?>
@@ -294,7 +290,7 @@ foreach ($bills as $b):
     </td>
     <td class="muted">
       <?= !empty($b['issue_date'])
-        ? date('d/m/Y', strtotime((string)$b['issue_date']))
+        ? htmlspecialchars(format_ui_date((string)$b['issue_date']))
         : '—' ?>
     </td>
     <td class="muted imported-file-cell" title="<?= htmlspecialchars((string)($b['import_source_file'] ?? '')) ?>">
@@ -339,7 +335,7 @@ foreach ($bills as $b):
 
 <!-- foreach RIEPILOGO -->
 <section class="card">
-  <h2>Riepilogo Annuale</h2>
+  <h2><?= htmlspecialchars(t('common.annual_summary')) ?></h2>
   <ul class="list">
 
     <?php foreach ($yearTotals as $yt):

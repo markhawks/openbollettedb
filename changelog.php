@@ -4,6 +4,20 @@ declare(strict_types=1);
 /* Storico versioni: aggiungere una nuova voce in cima ad ogni rilascio */
 $release = [
   [
+    'version' => 'v1.9.0',
+    'date'    => '13/11/2026',
+    'changes' => [
+      'Creata la nuova pagina Settings, che raccoglie gestione utenti, lingua dell’interfaccia, trasferimento dati e spazio per configurazioni future.',
+      'La voce Utente del menu principale è stata sostituita da Settings; la pagina account esistente rimane il modulo operativo per profilo, password e utenti.',
+      'Aggiunta l’esportazione JSON selettiva per utenza e intervallo di anni, comprendente bollette, metriche e letture ma non utenti, password, sessioni o PDF personali.',
+      'Aggiunta l’importazione da un altro nodo con validazione del formato e checksum, anteprima di record nuovi, identici o in conflitto e scelta fra conservazione locale e sostituzione.',
+      'Prima di ogni importazione confermata viene creato automaticamente un backup SQLite; l’operazione usa una transazione e viene annullata integralmente in caso di errore.',
+      'Aggiunta l’interfaccia multilingua Italiano/English con preferenza persistente per singolo utente e fallback automatico all’italiano.',
+      'Tradotti login, navigazione, Settings, gestione utenti, dashboard principali e moduli; nomi dei mesi e date seguono la lingua selezionata.',
+      'Riorganizzata graficamente la sezione Esporta/Importa a tutta larghezza, con pannelli affiancati sui monitor normali e layout verticale sui display piccoli.',
+    ],
+  ],
+  [
     'version' => 'v1.8.0',
     'date'    => '05/11/2026',
     'changes' => [

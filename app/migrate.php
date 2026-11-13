@@ -118,15 +118,20 @@ CREATE TABLE IF NOT EXISTS users (
 # se manca (CREATE TABLE IF NOT EXISTS non tocca lo schema di una tabella già presente).
 $hasRoleColumn = false;
 $hasSessionVersionColumn = false;
+$hasLanguageColumn = false;
 foreach ($pdo->query("PRAGMA table_info(users)") as $col) {
     if ($col['name'] === 'role') $hasRoleColumn = true;
     if ($col['name'] === 'session_version') $hasSessionVersionColumn = true;
+    if ($col['name'] === 'language') $hasLanguageColumn = true;
 }
 if (!$hasRoleColumn) {
     $pdo->exec("ALTER TABLE users ADD COLUMN role TEXT NOT NULL DEFAULT 'user'");
 }
 if (!$hasSessionVersionColumn) {
     $pdo->exec("ALTER TABLE users ADD COLUMN session_version INTEGER NOT NULL DEFAULT 1");
+}
+if (!$hasLanguageColumn) {
+    $pdo->exec("ALTER TABLE users ADD COLUMN language TEXT NOT NULL DEFAULT 'it'");
 }
 
 $pdo->exec("

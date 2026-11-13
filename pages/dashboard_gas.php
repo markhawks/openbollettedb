@@ -90,11 +90,7 @@ $sumStmt->execute([
 $yearTotals = $sumStmt->fetchAll(PDO::FETCH_ASSOC);
 
 
-$mesiItaliani = [
-  "01"=>"Gennaio","02"=>"Febbraio","03"=>"Marzo","04"=>"Aprile",
-  "05"=>"Maggio","06"=>"Giugno","07"=>"Luglio","08"=>"Agosto",
-  "09"=>"Settembre","10"=>"Ottobre","11"=>"Novembre","12"=>"Dicembre"
-];
+$mesiItaliani = localized_months();
 
 /* Mappa anno => totali, usata per calcolare la crescita rispetto all'anno precedente */
 $yearMap = [];
@@ -127,17 +123,17 @@ function gasGrowthBadge(array $crescita, string $label, string $unit): string {
 
 <header class="topbar">
   <div>
-    <h1>🔥 Gas Naturale</h1>
-    <div class="sub">Consumi, letture e costi</div>
+    <h1>🔥 <?= htmlspecialchars(t('dashboard.gas')) ?></h1>
+    <div class="sub"><?= htmlspecialchars(t('dashboard.gas_sub')) ?></div>
   </div>
   <?php if (is_admin()): ?>
-  <a class="btn" href="new_bill.php?u=gas">+ Nuova bolletta</a>
+  <a class="btn" href="new_bill.php?u=gas">+ <?= htmlspecialchars(t('common.new_bill')) ?></a>
   <?php endif; ?>
 </header>
 
 <!-- GRAFICO SMC -->
 <section class="card">
-  <h2>Andamento Consumi (Smc)</h2>
+  <h2><?= htmlspecialchars(t('dashboard.consumption')) ?> (Smc)</h2>
   <div style="height:300px">
     <canvas id="gasChart"></canvas>
   </div>
@@ -154,7 +150,7 @@ function gasGrowthBadge(array $crescita, string $label, string $unit): string {
 <section class="card">
   <div class="card-year-header">
     <h2>
-      Bollette <?= $year ?>
+      <?= htmlspecialchars(t('dashboard.bills')) ?> <?= $year ?>
       <?php if ($crescitaSmc || $crescitaSpesa): ?>
         <span style="font-size:1rem; margin-left:12px; display:inline-flex; gap:14px; vertical-align:middle;">
           <?= $crescitaSmc ? gasGrowthBadge($crescitaSmc, 'Consumo', 'Smc') : '' ?>
@@ -168,7 +164,7 @@ function gasGrowthBadge(array $crescita, string $label, string $unit): string {
       <input type="hidden" name="csrf" value="<?= htmlspecialchars($csrfToken) ?>">
       <input type="hidden" name="u" value="gas">
       <input type="hidden" name="year" value="<?= $year ?>">
-      <button class="btn-reset-year" type="submit" title="Elimina tutte le bollette Gas di questo anno">🗑️ Svuota anno</button>
+      <button class="btn-reset-year" type="submit" title="<?= htmlspecialchars(t('common.clear_year')) ?>">🗑️ <?= htmlspecialchars(t('common.clear_year')) ?></button>
     </form>
     <?php endif; ?>
   </div>
@@ -176,17 +172,17 @@ function gasGrowthBadge(array $crescita, string $label, string $unit): string {
     <thead>
       <tr>
         <th class="muted">#</th>
-        <th>Mese</th>
-        <th>Periodo</th>
-        <th class="right">Lettura Inizio</th>
-        <th class="right">Lettura Fine</th>
+        <th><?= htmlspecialchars(t('common.month')) ?></th>
+        <th><?= htmlspecialchars(t('common.period')) ?></th>
+        <th class="right"><?= htmlspecialchars(t('dashboard.start_reading')) ?></th>
+        <th class="right"><?= htmlspecialchars(t('dashboard.end_reading')) ?></th>
         <th class="right">Smc</th>
-        <th class="right">Comm. €/mese</th>
-        <th class="right">Extra</th>
-        <th class="right">Importo</th>
+        <th class="right"><?= htmlspecialchars(t('dashboard.commercial_fee')) ?></th>
+        <th class="right"><?= htmlspecialchars(t('common.extra')) ?></th>
+        <th class="right"><?= htmlspecialchars(t('common.amount')) ?></th>
         <th class="right">€/Smc</th>
-        <th>Note</th>
-        <th style="text-align:center;">Azioni</th>
+        <th><?= htmlspecialchars(t('common.notes')) ?></th>
+        <th style="text-align:center;"><?= htmlspecialchars(t('common.actions')) ?></th>
       </tr>
     </thead>
     <tbody>
@@ -225,8 +221,8 @@ function gasGrowthBadge(array $crescita, string $label, string $unit): string {
   <td><strong><?= $mesiItaliani[$b['mese_num']] ?></strong></td>
 
   <td class="muted">
-    <?= date('d/m/Y', strtotime($b['period_start'])) ?> –
-    <?= date('d/m/Y', strtotime($b['period_end'])) ?>
+    <?= htmlspecialchars(format_ui_date((string)$b['period_start'])) ?> –
+    <?= htmlspecialchars(format_ui_date((string)$b['period_end'])) ?>
   </td>
 
   <td class="right" style="color:<?= $colore ?>;">
@@ -287,7 +283,7 @@ function gasGrowthBadge(array $crescita, string $label, string $unit): string {
 
 <!-- RIEPILOGO -->
 <section class="card">
-  <h2>Riepilogo Annuale</h2>
+  <h2><?= htmlspecialchars(t('common.annual_summary')) ?></h2>
   <ul class="list">
   <?php foreach ($yearTotals as $yt):
   $commTot = $yt['total_comm_fee'];

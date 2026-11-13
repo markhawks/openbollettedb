@@ -442,18 +442,18 @@ if ($utilityCode === 'bonifica') {
 }
 ?>
 <!doctype html>
-<html lang="it">
+<html lang="<?= htmlspecialchars(current_language()) ?>">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Nuova bolletta</title>
+  <title><?= htmlspecialchars(t('form.new_bill')) ?></title>
   <link rel="icon" type="image/svg+xml" href="assets/img/favicon.svg">
   <link rel="stylesheet" href="assets/css/new_bill_style.css?v=<?= filemtime('assets/css/new_bill_style.css') ?>">
 </head>
 <body>
   <div class="container">
     <header class="topbar">
-      <div><h1>Nuova bolletta</h1><div class="sub"><?=htmlspecialchars($utility['name'])?></div></div>
+      <div><h1><?= htmlspecialchars(t('form.new_bill')) ?></h1><div class="sub"><?=htmlspecialchars($utility['name'])?></div></div>
       <a class="btn secondary" href="index.php?u=<?=htmlspecialchars($utilityCode)?>">← Indietro</a>
     </header>
 
@@ -483,29 +483,29 @@ if ($utilityCode === 'bonifica') {
   <div class="form-inline">
 
     <div class="field">
-      <label><?= $utilityCode === 'luce' ? 'Scadenza fattura' : 'Data scadenza' ?></label>
+      <label><?= htmlspecialchars(t($utilityCode === 'luce' ? 'common.invoice_due' : 'form.due_date')) ?></label>
       <input type="text" inputmode="numeric" placeholder="gg/mm/aaaa" pattern="\d{2}/\d{2}/\d{4}"
             name="issue_date"
             value="<?= htmlspecialchars(displayItalianDate($_POST['issue_date'] ?? '')) ?>">
     </div>
     <div class="field">
-      <label>Dal</label>
+      <label><?= htmlspecialchars(t('form.from')) ?></label>
       <input type="text" inputmode="numeric" placeholder="gg/mm/aaaa" pattern="\d{2}/\d{2}/\d{4}" name="period_start" value="<?= htmlspecialchars(displayItalianDate($postedPeriodStart ?: $firstDayPrevMonth)) ?>"<?= $utilityCode === 'tari' ? ' readonly' : '' ?>>
     </div>
     <div class="field">
-      <label>Al</label>
+      <label><?= htmlspecialchars(t('form.to')) ?></label>
       <input type="text" inputmode="numeric" placeholder="gg/mm/aaaa" pattern="\d{2}/\d{2}/\d{4}" name="period_end" value="<?= htmlspecialchars(displayItalianDate(post_string($_POST, 'period_end', $lastDayPrevMonth))) ?>"<?= $utilityCode === 'tari' ? ' readonly' : '' ?>>
     </div>
     <div class="field">
-      <label><?= $utilityCode === 'tari' ? 'Importo lordo (€)' : 'Importo Totale (€)' ?></label>
+      <label><?= htmlspecialchars(t($utilityCode === 'tari' ? 'form.gross_amount' : 'form.total_amount')) ?></label>
       <input type="number" step="0.01" min="0" name="amount_total" value="<?= htmlspecialchars(post_string($_POST, 'amount_total', '60.00')) ?>">
     </div>
 
     <?php if ($utilityCode === 'luce'): ?>
       <div class="field"><label>kWh</label><input type="number" name="kwh" value="100"></div>
-      <div class="field"><label>Materia energia (€/kWh)</label><input type="number" step="0.0001" name="energy_price"></div>
-      <div class="field"><label>Commercializzazione (€/mese)</label><input type="number" step="0.01" name="commercial_fee"></div>
-      <div class="field"><label>Canone RAI (€)</label><input type="number" step="0.01" name="canone_rai" value="<?=$valore_canone?>"></div>
+      <div class="field"><label><?= htmlspecialchars(t('form.energy_price')) ?></label><input type="number" step="0.0001" name="energy_price"></div>
+      <div class="field"><label><?= htmlspecialchars(t('form.commercialization')) ?></label><input type="number" step="0.01" name="commercial_fee"></div>
+      <div class="field"><label><?= htmlspecialchars(t('form.tv_fee')) ?></label><input type="number" step="0.01" name="canone_rai" value="<?=$valore_canone?>"></div>
       <div class="field">
         <label style="display:flex; align-items:center; gap:6px;">
           <input type="checkbox" name="stima" value="1">
@@ -521,9 +521,9 @@ if ($utilityCode === 'bonifica') {
     <?php endif; ?>
 
     <?php if ($utilityCode === 'tari'): ?>
-      <div class="field"><label>Data fattura</label><input type="text" inputmode="numeric" placeholder="gg/mm/aaaa" pattern="\d{2}/\d{2}/\d{4}" name="data_fattura" value="<?= htmlspecialchars(displayItalianDate(post_string($_POST, 'data_fattura', date('Y-m-d')))) ?>"></div>
+      <div class="field"><label><?= htmlspecialchars(t('form.invoice_date')) ?></label><input type="text" inputmode="numeric" placeholder="gg/mm/aaaa" pattern="\d{2}/\d{2}/\d{4}" name="data_fattura" value="<?= htmlspecialchars(displayItalianDate(post_string($_POST, 'data_fattura', date('Y-m-d')))) ?>"></div>
       <div class="field">
-        <label>Trimestre</label>
+        <label><?= htmlspecialchars(t('form.quarter')) ?></label>
         <select name="periodo_competenza" id="trimestre" required>
           <option value="">— seleziona —</option>
           <?php $selectedQuarter = post_string($_POST, 'periodo_competenza'); ?>
@@ -535,9 +535,9 @@ if ($utilityCode === 'bonifica') {
         <small class="muted">Seleziona prima l'anno in alto, poi il trimestre.</small>
       </div>
 
-      <div class="field"><label>Numero avviso/Fattura n.</label><input type="text" name="numero_fattura"></div>
+      <div class="field"><label><?= htmlspecialchars(t('form.invoice_number')) ?></label><input type="text" name="numero_fattura"></div>
       <div class="field">
-        <label>Codice Utente/Cliente</label>
+        <label><?= htmlspecialchars(t('form.customer_code')) ?></label>
         <div class="field-input-action">
           <input type="text" name="codice_cliente" maxlength="100" value="<?= htmlspecialchars(post_string($_POST, 'codice_cliente')) ?>">
           <?php if ($latestTariIdentifiers['codice_cliente'] !== ''): ?>
@@ -548,7 +548,7 @@ if ($utilityCode === 'bonifica') {
         </div>
       </div>
       <div class="field">
-        <label>Codice Utenza/Contratto n.</label>
+        <label><?= htmlspecialchars(t('form.utility_code')) ?></label>
         <div class="field-input-action">
           <input type="text" name="codice_utenza" maxlength="100" value="<?= htmlspecialchars(post_string($_POST, 'codice_utenza')) ?>">
           <?php if ($latestTariIdentifiers['codice_utenza'] !== ''): ?>
@@ -559,7 +559,7 @@ if ($utilityCode === 'bonifica') {
         </div>
       </div>
       <div class="field">
-        <label>Tipo avviso</label>
+        <label><?= htmlspecialchars(t('form.notice_type')) ?></label>
         <select name="tipo_avviso">
           <option value="Ordinaria">Ordinaria</option>
           <option value="Rettifica">Rettifica</option>
@@ -567,9 +567,9 @@ if ($utilityCode === 'bonifica') {
         </select>
       </div>
 
-      <div class="field"><label>% Raccolta diff.</label><input type="number" step="0.1" name="raccolta_diff"></div>
+      <div class="field"><label><?= htmlspecialchars(t('form.recycling')) ?></label><input type="number" step="0.1" name="raccolta_diff"></div>
       <div class="field">
-        <label>Svuotature indifferenziato (20 l)</label>
+        <label><?= htmlspecialchars(t('form.residual_emptyings')) ?></label>
         <input type="number" name="svuotature_grigio" min="0" max="20" step="1"
                value="<?= htmlspecialchars(post_string($_POST, 'svuotature_grigio', '0')) ?>">
       </div>
@@ -612,19 +612,19 @@ if ($utilityCode === 'bonifica') {
       </div>
 
       <div class="field">
-        <label>Prossima lettura dal</label>
+        <label><?= htmlspecialchars(t('form.next_reading_from')) ?></label>
         <input type="text" inputmode="numeric" placeholder="gg/mm/aaaa" pattern="\d{2}/\d{2}/\d{4}" name="next_reading_start"
               value="<?= htmlspecialchars(displayItalianDate($_POST['next_reading_start'] ?? '')) ?>">
       </div>
       <div class="field">
-        <label>Prossima lettura al</label>
+        <label><?= htmlspecialchars(t('form.next_reading_to')) ?></label>
         <input type="text" inputmode="numeric" placeholder="gg/mm/aaaa" pattern="\d{2}/\d{2}/\d{4}" name="next_reading_end"
               value="<?= htmlspecialchars(displayItalianDate($_POST['next_reading_end'] ?? '')) ?>">
         <small class="muted">Periodo indicato in bolletta per comunicare l'autolettura</small>
       </div>
 
       <div class="field wide">
-        <label>Storico letture (opzionale)</label>
+        <label><?= htmlspecialchars(t('form.reading_history')) ?></label>
         <div id="readings-list">
           <?php
             $postDates  = $_POST['reading_date']  ?? [''];
@@ -639,7 +639,7 @@ if ($utilityCode === 'bonifica') {
             </div>
           <?php endforeach; ?>
         </div>
-        <button type="button" class="btn secondary" id="add-reading">+ Aggiungi lettura</button>
+        <button type="button" class="btn secondary" id="add-reading">+ <?= htmlspecialchars(t('form.add_reading')) ?></button>
         <small class="muted">Letture intermedie del contatore durante il periodo, per capire l'andamento del consumo</small>
       </div>
     <?php endif; ?>
@@ -654,17 +654,17 @@ if ($utilityCode === 'bonifica') {
         </select>
       </div>
       <div class="field">
-        <label>Data scadenza</label>
+        <label><?= htmlspecialchars(t('form.due_date')) ?></label>
         <input type="text" inputmode="numeric" placeholder="gg/mm/aaaa" pattern="\d{2}/\d{2}/\d{4}" name="data_scadenza" value="<?= htmlspecialchars(displayItalianDate($_POST['data_scadenza'] ?? '')) ?>">
       </div>
       <div class="field">
-        <label>Data di pagamento</label>
+        <label><?= htmlspecialchars(t('form.payment_date')) ?></label>
         <input type="text" inputmode="numeric" placeholder="gg/mm/aaaa" pattern="\d{2}/\d{2}/\d{4}" name="data_pagamento" value="<?= htmlspecialchars(displayItalianDate($_POST['data_pagamento'] ?? '')) ?>">
       </div>
     <?php endif; ?>
 
     <div class="field">
-      <label><?= $utilityCode === 'tari' ? 'Credito/rimborso utilizzato (€)' : 'Extra/Bonus (€)' ?></label>
+      <label><?= htmlspecialchars(t($utilityCode === 'tari' ? 'form.credit' : 'form.extra_bonus')) ?></label>
       <input type="number" step="0.01" <?= $utilityCode === 'tari' ? 'min="0" name="tari_credit"' : 'name="extra_adjust"' ?>
              value="<?= htmlspecialchars($utilityCode === 'tari' ? post_string($_POST, 'tari_credit', '0.00') : post_string($_POST, 'extra_adjust', '0.00')) ?>">
       <?php if ($utilityCode === 'tari'): ?>
@@ -672,12 +672,12 @@ if ($utilityCode === 'bonifica') {
       <?php endif; ?>
     </div>
     <div class="field wide">
-      <label>Note</label>
+      <label><?= htmlspecialchars(t('form.notes')) ?></label>
       <input type="text" name="notes" placeholder="Opzionale...">
     </div>
     
     <div class="actions">
-      <button class="btn" type="submit" style="width: 100%; min-height: 44px;">Salva Bolletta</button>
+      <button class="btn" type="submit" style="width: 100%; min-height: 44px;"><?= htmlspecialchars(t('form.save_bill')) ?></button>
     </div>
 
   </div> 

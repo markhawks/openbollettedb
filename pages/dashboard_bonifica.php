@@ -71,8 +71,8 @@ $amounts = array_map(fn($v) => (float)$v, array_column($chartData, 'totale'));
   <!-- HEADER -->
   <header class="topbar">
     <div>
-      <h1>🌾 Bonifica – Consorzio di bonifica</h1>
-      <div class="sub">Gestione bollette annuali</div>
+      <h1>🌾 <?= htmlspecialchars(t('dashboard.reclamation')) ?></h1>
+      <div class="sub"><?= htmlspecialchars(t('dashboard.reclamation_sub')) ?></div>
     </div>
     <?php if (is_admin()): ?>
     <a class="btn" href="new_bill.php?u=bonifica">+ Nuova Bonifica</a>
@@ -104,12 +104,12 @@ $amounts = array_map(fn($v) => (float)$v, array_column($chartData, 'totale'));
       <table>
         <thead>
           <tr>
-            <th>Anno</th>
-            <th>Data scadenza</th>
+            <th><?= htmlspecialchars(t('common.year')) ?></th>
+            <th><?= htmlspecialchars(t('common.due_date')) ?></th>
             <th>Data pagamento</th>
-            <th class="right">Importo €</th>
-            <th>Note</th>
-            <th style="text-align:center;">Azioni</th>
+            <th class="right"><?= htmlspecialchars(t('common.amount')) ?> €</th>
+            <th><?= htmlspecialchars(t('common.notes')) ?></th>
+            <th style="text-align:center;"><?= htmlspecialchars(t('common.actions')) ?></th>
           </tr>
         </thead>
         <tbody>
@@ -132,11 +132,11 @@ $amounts = array_map(fn($v) => (float)$v, array_column($chartData, 'totale'));
     <td><strong><?= $year ?></strong></td>
 
     <td>
-      <?= $scadenza ? date('d/m/Y', strtotime($scadenza)) : '-' ?>
+      <?= $scadenza ? htmlspecialchars(format_ui_date((string)$scadenza)) : '-' ?>
     </td>
 
     <td>
-      <?= $pagamento ? date('d/m/Y', strtotime($pagamento)) : '-' ?>
+      <?= $pagamento ? htmlspecialchars(format_ui_date((string)$pagamento)) : '-' ?>
       <?php if ($warningMsg): ?>
         <span title="<?= htmlspecialchars($warningMsg) ?>" style="cursor:help;">⚠️</span>
       <?php endif; ?>
@@ -175,7 +175,7 @@ $amounts = array_map(fn($v) => (float)$v, array_column($chartData, 'totale'));
 
 <!-- RIEPILOGO -->
 <section class="card">
-  <h2>Riepilogo Annuale</h2>
+  <h2><?= htmlspecialchars(t('common.annual_summary')) ?></h2>
   <ul class="list">
     <?php foreach ($billsByYear as $year => $items):
       $totale = array_sum(array_column($items, 'amount_total'));

@@ -6,7 +6,7 @@
 
 ![PHP](https://img.shields.io/badge/PHP-8.x-777BB4?logo=php&logoColor=white)
 ![Database](https://img.shields.io/badge/DB-SQLite-003B57?logo=sqlite&logoColor=white)
-![Version](https://img.shields.io/badge/version-v1.8.0-2563eb)
+![Version](https://img.shields.io/badge/version-v1.9.0-2563eb)
 ![Tested on](https://img.shields.io/badge/tested%20on-Fedora%2044-294172?logo=fedora&logoColor=white)
 [![License: AGPL v3+](https://img.shields.io/badge/license-AGPL--3.0--or--later-blue)](LICENSE)
 
@@ -47,6 +47,11 @@ A small PHP application with no framework or package manager, for tracking house
   session revocation after sensitive account changes.
 - Responsive interface, software version on the login page, built-in release notes, optional demo
   data, and protected per-utility/year cleanup tools.
+- Multilingual **Italian / English** interface with a per-user preference in Settings; menus, login,
+  settings, main dashboards, forms, and dates follow the selected language.
+- New **Settings** page for language, profile, and future configuration. Administrators can export
+  bills, metrics, and readings as JSON and import them on another node with a preview, conflict
+  detection, keep/replace choices, and an automatic SQLite backup.
 
 ## Screenshots
 
@@ -163,6 +168,21 @@ to `errori/`. A real bill may automatically replace an estimate for the same mon
 real record is never overwritten. Image-only scans require OCR and are not currently supported. See
 [`data/imports/README.md`](data/imports/README.md).
 
+## Settings, language, and node-to-node transfer
+
+The **⚙️ Settings** page brings together profile/user management, interface language, and data
+transfer. Each user can select **Italiano** or **English**; the preference is stored in the database
+and restored automatically on subsequent sign-ins.
+
+Administrators can download a JSON file for selected utilities and years. It contains bills, metrics,
+readings, a format version, and a SHA-256 checksum. Accounts, passwords, sessions, and PDF documents
+are excluded. On the destination node, **Analyze file** previews new, identical, and conflicting
+records before anything is saved.
+
+For conflicts, the administrator can keep local data or replace it with imported data. Before a
+confirmed import, OpenBolletteDB creates `data/backup_before_transfer_*.sqlite`; the import runs in a
+transaction so failures cannot leave partial updates.
+
 ## Default account
 
 - Username: `admin`
@@ -191,6 +211,8 @@ configuration before exposing it to the Internet.
 - `pages/dashboard_*.php` — utility dashboards
 - `new_bill.php`, `edit_bill.php`, `delete_bill.php`, `reset_year.php` — bill management
 - `login.php`, `logout.php`, `account.php` — authentication and user management
+- `settings.php` — language, user-management entry point, and node-to-node data transfer
+- `app/i18n.php`, `lang/it.php`, `lang/en.php` — localization helpers and translation dictionaries
 - `app/db.php` — shared PDO/SQLite connection
 - `app/auth.php` — sessions, roles, revocation, and login throttling
 - `app/csrf.php` — CSRF protection

@@ -111,8 +111,8 @@ $amountsEstimated = array_map(fn($v) => (float)$v, array_column($chartData, 'tot
   <!-- HEADER -->
   <header class="topbar">
     <div>
-      <h1>🗑️ TARI – Tassa Rifiuti</h1>
-      <div class="sub">Gestione bollette rifiuti</div>
+      <h1>🗑️ <?= htmlspecialchars(t('dashboard.waste')) ?></h1>
+      <div class="sub"><?= htmlspecialchars(t('dashboard.waste_sub')) ?></div>
     </div>
     <?php if (is_admin()): ?>
     <a class="btn" href="new_bill.php?u=tari">+ Nuova TARI</a>
@@ -164,7 +164,7 @@ $amountsEstimated = array_map(fn($v) => (float)$v, array_column($chartData, 'tot
       <table class="tari-table">
         <thead>
           <tr>
-            <th>Anno</th>
+            <th><?= htmlspecialchars(t('common.year')) ?></th>
             <th>Codice Utente/Cliente</th>
             <th>Codice Utenza/Contratto n.</th>
             <th>Periodo (Dal / Al)</th>
@@ -177,9 +177,9 @@ $amountsEstimated = array_map(fn($v) => (float)$v, array_column($chartData, 'tot
             <th class="right">Importo lordo</th>
             <th class="right">Credito/rimborso</th>
             <th class="right">Da pagare</th>
-            <th>Data scadenza</th>
-            <th>Note</th>
-            <th style="text-align:center;">Azioni</th>
+            <th><?= htmlspecialchars(t('common.due_date')) ?></th>
+            <th><?= htmlspecialchars(t('common.notes')) ?></th>
+            <th style="text-align:center;"><?= htmlspecialchars(t('common.actions')) ?></th>
           </tr>
         </thead>
         <tbody>
@@ -199,9 +199,9 @@ $amountsEstimated = array_map(fn($v) => (float)$v, array_column($chartData, 'tot
     <td><?= $codiceUtenza !== '' ? htmlspecialchars($codiceUtenza) : '<span class="muted">—</span>' ?></td>
 
     <td class="muted tari-period">
-        <?= date('d/m/Y', strtotime($b['period_start'])) ?>
+        <?= htmlspecialchars(format_ui_date((string)$b['period_start'])) ?>
         —
-        <?= date('d/m/Y', strtotime($b['period_end'])) ?>
+        <?= htmlspecialchars(format_ui_date((string)$b['period_end'])) ?>
       </td>
 
     <td>
@@ -215,7 +215,7 @@ $amountsEstimated = array_map(fn($v) => (float)$v, array_column($chartData, 'tot
 
     <td>
       <?= $b['data_fattura']
-        ? date('d/m/Y', strtotime($b['data_fattura']))
+        ? htmlspecialchars(format_ui_date((string)$b['data_fattura']))
         : '-' ?>
     </td>
 
@@ -285,7 +285,7 @@ $amountsEstimated = array_map(fn($v) => (float)$v, array_column($chartData, 'tot
 
     <td>
       <?= $b['issue_date']
-        ? date('d/m/Y', strtotime($b['issue_date']))
+        ? htmlspecialchars(format_ui_date((string)$b['issue_date']))
         : '<span class="muted">—</span>' ?>
     </td>
 
@@ -319,7 +319,7 @@ $amountsEstimated = array_map(fn($v) => (float)$v, array_column($chartData, 'tot
 
 <!-- RIEPILOGO -->
 <section class="card">
-  <h2>Riepilogo Annuale</h2>
+  <h2><?= htmlspecialchars(t('common.annual_summary')) ?></h2>
   <ul class="list">
     <?php foreach ($billsByYear as $year => $items):
       $yearStats = $annualTariStats[(string)$year];
